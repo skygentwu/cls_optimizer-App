@@ -1,0 +1,61 @@
+{
+  "_comment": "cls_optimizer -> cls_optimizer-App 同步映射配置",
+  "sourceRoot": "D:/python/cls_optimizer",
+  "targetRoot": "D:/python/cls_optimizer-App",
+  "mappings": [
+    {
+      "type": "copy",
+      "description": "TypeScript 类型定义 - 直接复用",
+      "source": "frontend/src/types.ts",
+      "target": "src/types/original.ts",
+      "note": "复制后需人工合并到 src/types/index.ts（移动端可能删减部分类型）"
+    },
+    {
+      "type": "copy",
+      "description": "产品常量定义 - 直接复用",
+      "source": "frontend/src/domain/products.ts",
+      "target": "src/constants/products.ts",
+      "note": "价格默认值、产品标签等，直接覆盖"
+    },
+    {
+      "type": "reference",
+      "description": "API 接口封装 - 参考更新",
+      "source": "frontend/src/api/client.ts",
+      "target": "src/api/client.ts",
+      "note": "参考原有函数签名，适配移动端（移除token参数，改为从localStorage读取）"
+    },
+    {
+      "type": "reference",
+      "description": "FastAPI Schemas - 参考类型变更",
+      "source": "backend/app/schemas.py",
+      "target": "src/types/index.ts",
+      "note": "Pydantic模型变更时，需同步更新TS类型定义"
+    },
+    {
+      "type": "reference",
+      "description": "API 路由 - 参考新接口",
+      "source": "backend/app/routers",
+      "target": "src/api/client.ts",
+      "note": "新增/修改/删除路由时，同步更新API client"
+    },
+    {
+      "type": "reference",
+      "description": "API 接口合同文档",
+      "source": "doc/API接口合同.md",
+      "target": "src/api/client.ts",
+      "note": "接口合同变更时，同步更新前端调用"
+    }
+  ],
+  "watchPatterns": [
+    "frontend/src/types.ts",
+    "frontend/src/domain/products.ts",
+    "frontend/src/api/client.ts",
+    "backend/app/schemas.py",
+    "backend/app/routers/*.py",
+    "doc/API接口合同.md"
+  ],
+  "autoCopy": [
+    "frontend/src/types.ts -> src/types/original.ts",
+    "frontend/src/domain/products.ts -> src/constants/products.ts"
+  ]
+}

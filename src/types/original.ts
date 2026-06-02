@@ -264,6 +264,7 @@ export type DataAdminImportResponse = {
   table_name: string;
   imported_rows: number;
   message: string;
+  action?: string;
 };
 
 export type DataAdminExportResponse = {
