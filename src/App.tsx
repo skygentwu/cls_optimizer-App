@@ -3,9 +3,9 @@ import { useAuthStore } from '@/stores/authStore';
 import LoginPage from '@/pages/login/LoginPage';
 import AppShell from '@/components/AppShell';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
-import RecommendationPage from '@/pages/recommendation/RecommendationPage';
-import ManualPage from '@/pages/manual/ManualPage';
-import PricesPage from '@/pages/prices/PricesPage';
+import ComparePage from '@/pages/compare/ComparePage';
+import TrendsPage from '@/pages/trends/TrendsPage';
+import InsightsPage from '@/pages/insights/InsightsPage';
 import ProfilePage from '@/pages/profile/ProfilePage';
 
 function App() {
@@ -25,9 +25,9 @@ function App() {
               <AppShell>
                 <Routes>
                   <Route path="/" element={<DashboardPage />} />
-                  <Route path="/recommendation" element={<RecommendationPage />} />
-                  <Route path="/manual" element={<ManualPage />} />
-                  <Route path="/prices" element={<PricesPage />} />
+                  <Route path="/compare" element={<ComparePage />} />
+                  <Route path="/trends" element={<TrendsPage />} />
+                  <Route path="/insights" element={<InsightsPage />} />
                   <Route path="/profile" element={<ProfilePage />} />
                 </Routes>
               </AppShell>

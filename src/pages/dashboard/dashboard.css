@@ -7,6 +7,96 @@
   padding-bottom: 12px;
 }
 
+/* Hero 大卡片 */
+.hero-card {
+  background: linear-gradient(135deg, #1677ff 0%, #36cfc9 100%);
+  color: #fff;
+  text-align: center;
+}
+
+.hero-label {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 8px;
+}
+
+.hero-diff {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+}
+
+.hero-diff span:first-child {
+  font-size: 36px;
+  font-weight: 700;
+}
+
+.diff-positive {
+  color: #52c41a;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.diff-negative {
+  color: #ffccc7;
+}
+
+.diff-unit {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.hero-sub {
+  font-size: 13px;
+  opacity: 0.85;
+  margin-top: 4px;
+}
+
+/* 对比行 */
+.compare-label {
+  font-size: 13px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.compare-value {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.compare-unit {
+  font-size: 12px;
+  color: #999;
+}
+
+/* 产品网格 */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.product-card {
+  text-align: center;
+  padding: 16px 8px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.product-name {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.product-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1677ff;
+}
+
+/* 通用 */
 .card-title {
   font-size: 16px;
   font-weight: 600;
@@ -17,59 +107,17 @@
   gap: 8px;
 }
 
-/* 推荐卡片 */
-.recommendation-card {
-  background: linear-gradient(135deg, #e6f7ff 0%, #f0fffe 100%);
-}
-
-.recommendation-products {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.product-item {
-  text-align: center;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 8px;
-}
-
-.product-item.highlight {
-  grid-column: span 2;
-  background: #fff2f0;
-  border: 1px solid #ffccc7;
-}
-
-.product-name {
-  font-size: 13px;
-  color: #666;
-  margin-bottom: 4px;
-}
-
-.product-value {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1677ff;
-}
-
-/* 指标卡片 */
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-.metric-item {
-  text-align: center;
-  padding: 12px;
-  background: #fafafa;
-  border-radius: 8px;
-}
-
 .empty-state {
   text-align: center;
   padding: 24px;
   color: #999;
   font-size: 14px;
+}
+
+.status-optimal {
+  color: #52c41a;
+}
+
+.status-warning {
+  color: #faad14;
 }

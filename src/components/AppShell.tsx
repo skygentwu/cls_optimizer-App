@@ -3,9 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   AppOutline,
   HistogramOutline,
-  EditSOutline,
-  PayCircleOutline,
-  UserSetOutline,
+  EyeOutline,
+  AudioOutline,
+  UserOutline,
 } from 'antd-mobile-icons';
 import type { ReactNode } from 'react';
 
@@ -14,11 +14,11 @@ interface AppShellProps {
 }
 
 const tabs = [
-  { key: '/', title: '首页', icon: <AppOutline /> },
-  { key: '/recommendation', title: '推荐', icon: <HistogramOutline /> },
-  { key: '/manual', title: '模拟', icon: <EditSOutline /> },
-  { key: '/prices', title: '价格', icon: <PayCircleOutline /> },
-  { key: '/profile', title: '我的', icon: <UserSetOutline /> },
+  { key: '/', title: '概览', icon: <AppOutline /> },
+  { key: '/compare', title: '对比', icon: <HistogramOutline /> },
+  { key: '/trends', title: '趋势', icon: <EyeOutline /> },
+  { key: '/insights', title: '建议', icon: <AudioOutline /> },
+  { key: '/profile', title: '我的', icon: <UserOutline /> },
 ];
 
 export default function AppShell({ children }: AppShellProps) {
