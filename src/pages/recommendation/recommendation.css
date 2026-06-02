@@ -1,0 +1,128 @@
+.recommendation-page {
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.page-content {
+  padding-bottom: 12px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.picker-trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #333;
+}
+
+.price-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.price-input-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.price-input-item label {
+  font-size: 14px;
+  color: #666;
+}
+
+/* 结果卡片 */
+.result-products {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.result-product-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.result-product-info {
+  flex: 1;
+}
+
+.result-product-name {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+.result-product-bar {
+  height: 8px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.result-product-bar-inner {
+  height: 100%;
+  background: linear-gradient(90deg, #1677ff, #36cfc9);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.result-product-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1677ff;
+  min-width: 80px;
+  text-align: right;
+}
+
+/* 结果汇总 */
+.result-summary {
+  display: flex;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #d9d9d9;
+}
+
+.result-summary-item {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.result-summary-label {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.result-summary-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.result-summary-value.highlight {
+  color: #f5222d;
+}

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CLS Optimizer</string>
+    <string name="title_activity_main">CLS Optimizer</string>
+    <string name="package_name">com.chloralkali.clsoptimizer</string>
+    <string name="custom_url_scheme">com.chloralkali.clsoptimizer</string>
+</resources>
