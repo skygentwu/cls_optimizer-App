@@ -1,0 +1,146 @@
+.margin-page {
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.page-content {
+  padding-bottom: 12px;
+}
+
+/* Hero */
+.hero-card {
+  background: linear-gradient(135deg, #1677ff 0%, #36cfc9 100%);
+  color: #fff;
+  text-align: center;
+}
+
+.hero-label {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 8px;
+}
+
+.hero-diff {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.diff-positive {
+  color: #52c41a;
+  font-weight: 600;
+}
+
+.hero-sub {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+/* 表格 */
+.margin-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.margin-header {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 1fr 1fr 1.2fr;
+  gap: 6px;
+  padding: 8px 0;
+  font-size: 11px;
+  color: #999;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.margin-row {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 1fr 1fr 1.2fr;
+  gap: 6px;
+  padding: 8px 0;
+  font-size: 13px;
+  border-bottom: 1px solid #f8f8f8;
+  align-items: center;
+}
+
+.product-name-row {
+  font-weight: 600;
+  color: #333;
+  background: #fafafa;
+  padding: 8px;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+.text-gray {
+  color: #999;
+}
+
+.text-blue {
+  color: #1677ff;
+  font-weight: 600;
+}
+
+/* 差异分析 */
+.diff-analysis {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.diff-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.diff-row > span:first-child {
+  font-size: 13px;
+  color: #666;
+  width: 80px;
+}
+
+.diff-bar-bg {
+  flex: 1;
+  height: 16px;
+  background: #f0f0f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.diff-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #52c41a, #95de64);
+  border-radius: 8px;
+  transition: width 0.5s ease;
+}
+
+.diff-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #52c41a;
+  width: 90px;
+  text-align: right;
+}
+
+/* 通用 */
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metric-label {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 6px;
+}
+
+.metric-value {
+  font-size: 18px;
+  font-weight: 700;
+}

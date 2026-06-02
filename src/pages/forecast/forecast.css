@@ -1,0 +1,126 @@
+.forecast-page {
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.page-content {
+  padding-bottom: 12px;
+}
+
+/* 产品网格 */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.product-card {
+  text-align: center;
+  padding: 16px 8px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.product-name {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.product-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1677ff;
+}
+
+/* 预测列表 */
+.forecast-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.forecast-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  background: #fafafa;
+  border-radius: 8px;
+  gap: 8px;
+}
+
+.forecast-date {
+  font-size: 13px;
+  color: #999;
+  min-width: 40px;
+}
+
+.forecast-prices {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.price-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.price-tag.blue {
+  background: #e6f7ff;
+  color: #1677ff;
+}
+
+.price-tag.green {
+  background: #f6ffed;
+  color: #52c41a;
+}
+
+.price-tag.orange {
+  background: #fff7e6;
+  color: #faad14;
+}
+
+.forecast-margin {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1677ff;
+  min-width: 80px;
+  text-align: right;
+}
+
+/* 建议 */
+.advice-content {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #333;
+  padding: 8px;
+  background: #f6ffed;
+  border-radius: 8px;
+  border-left: 3px solid #52c41a;
+}
+
+/* 通用 */
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metric-label {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 6px;
+}
+
+.metric-value {
+  font-size: 18px;
+  font-weight: 700;
+}

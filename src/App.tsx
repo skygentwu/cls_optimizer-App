@@ -6,6 +6,10 @@ import DashboardPage from '@/pages/dashboard/DashboardPage';
 import ComparePage from '@/pages/compare/ComparePage';
 import TrendsPage from '@/pages/trends/TrendsPage';
 import InsightsPage from '@/pages/insights/InsightsPage';
+import BacktestPage from '@/pages/backtest/BacktestPage';
+import ForecastPage from '@/pages/forecast/ForecastPage';
+import MarginPage from '@/pages/margin/MarginPage';
+import ReportPage from '@/pages/report/ReportPage';
 import ProfilePage from '@/pages/profile/ProfilePage';
 
 function App() {
@@ -28,6 +32,10 @@ function App() {
                   <Route path="/compare" element={<ComparePage />} />
                   <Route path="/trends" element={<TrendsPage />} />
                   <Route path="/insights" element={<InsightsPage />} />
+                  <Route path="/backtest" element={<BacktestPage />} />
+                  <Route path="/forecast" element={<ForecastPage />} />
+                  <Route path="/margin" element={<MarginPage />} />
+                  <Route path="/report" element={<ReportPage />} />
                   <Route path="/profile" element={<ProfilePage />} />
                 </Routes>
               </AppShell>
