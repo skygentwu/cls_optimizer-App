@@ -43,6 +43,11 @@ interface AppState {
   // API 基础地址（支持内网穿透切换）
   apiBaseUrl: string;
   setApiBaseUrl: (url: string) => void;
+
+  // 深色模式
+  theme: 'light' | 'dark';
+  setTheme: (theme: 'light' | 'dark') => void;
+  toggleTheme: () => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -75,4 +80,18 @@ export const useAppStore = create<AppState>((set) => ({
 
   globalLoading: false,
   setGlobalLoading: (loading) => set({ globalLoading: loading }),
+
+  theme: (localStorage.getItem('cls_theme') as 'light' | 'dark') || 'light',
+  setTheme: (theme) => {
+    localStorage.setItem('cls_theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+    set({ theme });
+  },
+  toggleTheme: () => {
+    const current = useAppStore.getState().theme;
+    const next = current === 'light' ? 'dark' : 'light';
+    localStorage.setItem('cls_theme', next);
+    document.documentElement.setAttribute('data-theme', next);
+    set({ theme: next });
+  },
 }));

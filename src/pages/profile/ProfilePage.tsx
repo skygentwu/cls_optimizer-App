@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavBar, List, Button, Modal, Toast, Input } from 'antd-mobile';
+import { NavBar, List, Button, Modal, Toast, Input, Switch } from 'antd-mobile';
 import {
   UserOutline,
   CheckShieldOutline,
@@ -8,6 +8,7 @@ import {
   QuestionCircleOutline,
   TagOutline,
   SystemQRcodeOutline,
+  EyeOutline,
 } from 'antd-mobile-icons';
 import { useAuthStore } from '@/stores/authStore';
 import { useAppStore } from '@/stores/appStore';
@@ -17,7 +18,7 @@ import './profile.css';
 
 export default function ProfilePage() {
   const { user, clearAuth } = useAuthStore();
-  const { apiBaseUrl, setApiBaseUrl } = useAppStore();
+  const { apiBaseUrl, setApiBaseUrl, theme, toggleTheme } = useAppStore();
   const navigate = useNavigate();
   const [editingApi, setEditingApi] = useState(false);
   const [tempUrl, setTempUrl] = useState(apiBaseUrl);
@@ -137,6 +138,17 @@ export default function ProfilePage() {
             },
           ]}
         />
+
+        <div style={{ margin: '12px' }}>
+          <List header="外观">
+            <List.Item
+              prefix={<EyeOutline />}
+              extra={<Switch checked={theme === 'dark'} onChange={toggleTheme} />}
+            >
+              深色模式
+            </List.Item>
+          </List>
+        </div>
 
         <div style={{ margin: '12px' }}>
           <List>

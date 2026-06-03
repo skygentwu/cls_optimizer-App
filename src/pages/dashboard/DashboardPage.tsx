@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { NavBar, Card, Tag, Toast, PullToRefresh, Grid } from 'antd-mobile';
 import {
   HistogramOutline,
@@ -9,6 +9,7 @@ import {
   CalendarOutline,
   PayCircleOutline,
   FileOutline,
+  DownlandOutline,
 } from 'antd-mobile-icons';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -21,6 +22,7 @@ import { PRODUCT_LABELS, DEFAULT_NAOH_DAILY } from '@/constants';
 import { formatCurrency, formatTons } from '@/utils/format';
 import { SkeletonCard, SkeletonGrid } from '@/components/common/SkeletonCard';
 import { ErrorRetry } from '@/components/common/ErrorRetry';
+
 import './dashboard.css';
 
 export default function DashboardPage() {
@@ -28,6 +30,25 @@ export default function DashboardPage() {
   const store = useAppStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const dashboardRef = useRef<HTMLDivElement>(null);
+
+  const handleExport = async () => {
+    if (!dashboardRef.current) return;
+    try {
+      Toast.show({ icon: 'loading', content: '正在生成图片...', duration: 0 });
+      const { default: html2canvas } = await import('html2canvas');
+      const canvas = await html2canvas(dashboardRef.current, { scale: 2, backgroundColor: '#f5f5f5' });
+      const link = document.createElement('a');
+      link.download = `CLS_Optimizer_${new Date().toISOString().slice(0, 10)}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      Toast.clear();
+      Toast.show({ icon: 'success', content: '图片已保存' });
+    } catch {
+      Toast.clear();
+      Toast.show({ icon: 'fail', content: '导出失败' });
+    }
+  };
 
   useEffect(() => {
     loadDashboardData();
@@ -115,12 +136,14 @@ export default function DashboardPage() {
 
   return (
     <div className="dashboard-page">
-      <NavBar back={null} style={{ background: '#1677ff', color: '#fff' }}>
+      <NavBar back={null} style={{ background: '#1677ff', color: '#fff' }}
+        right={<DownlandOutline style={{ color: '#fff', fontSize: 20 }} onClick={handleExport} />}
+      >
         <span style={{ color: '#fff', fontWeight: 600 }}>经营驾驶舱</span>
       </NavBar>
 
       <PullToRefresh onRefresh={loadDashboardData}>
-        <div className="dashboard-content">
+        <div className="dashboard-content" ref={dashboardRef}>
           {loading && (
             <>
               <SkeletonCard rows={2} />

@@ -23,6 +23,51 @@ body {
   overscroll-behavior-y: none;
 }
 
+/* 深色模式 */
+[data-theme='dark'] body {
+  background-color: #141414;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme='dark'] .adm-nav-bar {
+  background: #1f1f1f !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+[data-theme='dark'] .adm-card {
+  background: #1f1f1f;
+  border-color: #333;
+}
+
+[data-theme='dark'] .adm-list {
+  background: #1f1f1f;
+}
+
+[data-theme='dark'] .adm-list-item {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme='dark'] .adm-list-header {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+[data-theme='dark'] .adm-tab-bar {
+  background: #1f1f1f;
+  border-top-color: #333;
+}
+
+[data-theme='dark'] .adm-tab-bar-item-title {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+[data-theme='dark'] .adm-tab-bar-item-active .adm-tab-bar-item-title {
+  color: #1677ff;
+}
+
+[data-theme='dark'] .metric-label {
+  color: rgba(255, 255, 255, 0.45);
+}
+
 #root {
   min-height: 100vh;
   display: flex;
