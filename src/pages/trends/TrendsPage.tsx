@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { NavBar, Card, Tabs } from 'antd-mobile';
 import { PRODUCT_LABELS } from '@/constants';
 import { formatCurrency } from '@/utils/format';
@@ -25,6 +26,7 @@ const MOCK_MARGIN = [
 ];
 
 export default function TrendsPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('price');
 
   const maxPrice = Math.max(...MOCK_PRICES.map(d => Math.max(d.liquid_chlorine, d.hcl31, d.naclo10)));
@@ -38,7 +40,7 @@ export default function TrendsPage() {
 
   return (
     <div className="trends-page">
-      <NavBar back={null}>趋势洞察</NavBar>
+      <NavBar onBack={() => navigate(-1)}>趋势洞察</NavBar>
 
       <div className="page-content">
         <Tabs activeKey={activeTab} onChange={setActiveTab}>

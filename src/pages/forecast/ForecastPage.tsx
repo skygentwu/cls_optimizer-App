@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { NavBar, Card, Tag, Button, Selector } from 'antd-mobile';
 import { runForecastAnalysis, generateForecastLlmAdvice } from '@/api/client';
 import { PRODUCT_LABELS } from '@/constants';
@@ -23,6 +24,7 @@ const RECOMMENDED = {
 };
 
 export default function ForecastPage() {
+  const navigate = useNavigate();
   const [days, setDays] = useState<'7' | '14' | '30'>('7');
   const [loading, setLoading] = useState(false);
   const [llmAdvice, setLlmAdvice] = useState('');
@@ -62,7 +64,7 @@ export default function ForecastPage() {
 
   return (
     <div className="forecast-page">
-      <NavBar back={null}>预测分析</NavBar>
+      <NavBar onBack={() => navigate(-1)}>预测分析</NavBar>
 
       <div className="page-content">
         {/* 预测天数选择 */}

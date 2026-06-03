@@ -1,5 +1,6 @@
 import { TabBar } from 'antd-mobile';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useSwipeable } from 'react-swipeable';
 import {
   AppOutline,
   HistogramOutline,
@@ -25,9 +26,19 @@ export default function AppShell({ children }: AppShellProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const swipeHandlers = useSwipeable({
+    onSwipedRight: (e) => {
+      if (e.initial[0] < 40) {
+        navigate(-1);
+      }
+    },
+    trackMouse: false,
+    delta: 60,
+  });
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <main style={{ flex: 1, overflowY: 'auto', paddingBottom: 60 }}>
+      <main style={{ flex: 1, overflowY: 'auto', paddingBottom: 60 }} {...swipeHandlers}>
         {children}
       </main>
       <TabBar

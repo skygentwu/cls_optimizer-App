@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { NavBar, Card, Tag, Toast, Button, Badge } from 'antd-mobile';
 import { useAppStore } from '@/stores/appStore';
 import { formatCurrency } from '@/utils/format';
@@ -19,6 +20,7 @@ const HISTORY_ADVICE = [
 ];
 
 export default function InsightsPage() {
+  const navigate = useNavigate();
   const store = useAppStore();
   const [report, setReport] = useState('');
   const [loading, setLoading] = useState(false);
@@ -63,7 +65,7 @@ export default function InsightsPage() {
 
   return (
     <div className="insights-page">
-      <NavBar back={null}>智能建议</NavBar>
+      <NavBar onBack={() => navigate(-1)}>智能建议</NavBar>
 
       <div className="page-content">
         {/* 预警通知 */}

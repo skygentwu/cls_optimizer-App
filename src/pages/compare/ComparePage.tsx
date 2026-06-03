@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { NavBar, Card, Tag } from 'antd-mobile';
 import { useAppStore } from '@/stores/appStore';
 import { PRODUCT_LABELS } from '@/constants';
@@ -14,6 +15,7 @@ const MOCK_HISTORY = [
 ];
 
 export default function ComparePage() {
+  const navigate = useNavigate();
   const store = useAppStore();
   const rec = store.recommendation;
   const manual = store.manualResult;
@@ -24,7 +26,7 @@ export default function ComparePage() {
 
   return (
     <div className="compare-page">
-      <NavBar back={null}>决策对比分析</NavBar>
+      <NavBar onBack={() => navigate(-1)}>决策对比分析</NavBar>
 
       <div className="page-content">
         {/* 累计收益差异 */}

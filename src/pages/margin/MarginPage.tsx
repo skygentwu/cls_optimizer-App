@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { NavBar, Card, Selector } from 'antd-mobile';
 import { runFinanceMarginAnalysis } from '@/api/client';
 import { PRODUCT_LABELS } from '@/constants';
@@ -24,6 +25,7 @@ const MOCK_FINANCE = {
 };
 
 export default function MarginPage() {
+  const navigate = useNavigate();
   const [month, setMonth] = useState('2026-05');
 
   const loadMargin = async () => {
@@ -45,7 +47,7 @@ export default function MarginPage() {
 
   return (
     <div className="margin-page">
-      <NavBar back={null}>财务分析</NavBar>
+      <NavBar onBack={() => navigate(-1)}>财务分析</NavBar>
 
       <div className="page-content">
         {/* 月份选择 */}

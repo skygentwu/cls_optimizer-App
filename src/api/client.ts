@@ -1,6 +1,6 @@
 // 基于 cls_optimizer/frontend/src/api/client.ts 复用，适配移动端
 
-import { AUTH_TOKEN_KEY } from "@/constants";
+import { useAuthStore } from "@/stores/authStore";
 import type {
   CurrentUserResponse,
   DecisionMode,
@@ -48,7 +48,7 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  const token = useAuthStore.getState().token;
   const response = await fetch(buildApiUrl(path), {
     ...options,
     headers: {
@@ -59,6 +59,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   });
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
+    if (response.status === 401 && !path.includes('/auth/login')) {
+      useAuthStore.getState().clearAuth();
+      window.location.reload();
+    }
     throw new ApiError(response.status, body.detail ?? response.statusText);
   }
   return response.json() as Promise<T>;

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { NavBar, Card, Tag, Selector } from 'antd-mobile';
 import { fetchBacktestRange, runBacktestAnalysis } from '@/api/client';
 import { formatCurrency } from '@/utils/format';
@@ -19,6 +20,7 @@ const MOCK_BACKTEST = [
 ];
 
 export default function BacktestPage() {
+  const navigate = useNavigate();
   const [range, setRange] = useState<'7' | '14' | '30'>('14');
   const [data] = useState(MOCK_BACKTEST);
 
@@ -47,7 +49,7 @@ export default function BacktestPage() {
 
   return (
     <div className="backtest-page">
-      <NavBar back={null}>历史回测</NavBar>
+      <NavBar onBack={() => navigate(-1)}>历史回测</NavBar>
 
       <div className="page-content">
         {/* 累计收益差异 */}

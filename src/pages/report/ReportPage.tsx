@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { NavBar, Card, Tag, Toast, Button } from 'antd-mobile';
 
 import './report.css';
@@ -41,6 +42,7 @@ const SAMPLE_REPORT = `## 经营决策分析报告
 `;
 
 export default function ReportPage() {
+  const navigate = useNavigate();
   const [report, setReport] = useState('');
   const [generating, setGenerating] = useState(false);
 
@@ -60,7 +62,7 @@ export default function ReportPage() {
 
   return (
     <div className="report-page">
-      <NavBar back={null}>经营报告</NavBar>
+      <NavBar onBack={() => navigate(-1)}>经营报告</NavBar>
 
       <div className="page-content">
         {/* 生成报告按钮 */}
