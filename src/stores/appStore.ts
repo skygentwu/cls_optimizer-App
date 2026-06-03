@@ -39,9 +39,19 @@ interface AppState {
   // 全局加载状态
   globalLoading: boolean;
   setGlobalLoading: (loading: boolean) => void;
+
+  // API 基础地址（支持内网穿透切换）
+  apiBaseUrl: string;
+  setApiBaseUrl: (url: string) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
+  apiBaseUrl: localStorage.getItem('cls_api_base') || import.meta.env.VITE_API_BASE_URL || '',
+  setApiBaseUrl: (url: string) => {
+    localStorage.setItem('cls_api_base', url);
+    set({ apiBaseUrl: url });
+  },
+
   naohDaily: DEFAULT_NAOH_DAILY,
   setNaohDaily: (value) => set({ naohDaily: value }),
 

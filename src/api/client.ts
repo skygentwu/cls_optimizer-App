@@ -1,6 +1,7 @@
 // 基于 cls_optimizer/frontend/src/api/client.ts 复用，适配移动端
 
 import { useAuthStore } from "@/stores/authStore";
+import { useAppStore } from "@/stores/appStore";
 import type {
   CurrentUserResponse,
   DecisionMode,
@@ -25,10 +26,10 @@ import type {
   BacktestAnalysisResponse,
 } from "@/types";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+const getApiBase = () => useAppStore.getState().apiBaseUrl || import.meta.env.VITE_API_BASE_URL || "";
 
 function buildApiUrl(path: string): string {
-  const base = String(API_BASE).replace(/\/+$/, "");
+  const base = String(getApiBase()).replace(/\/+$/, "");
   if (!base) {
     return path;
   }
