@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NavBar, Card, Tabs } from 'antd-mobile';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { SkeletonCard } from '@/components/common/SkeletonCard';
+import { ErrorRetry } from '@/components/common/ErrorRetry';
 import { PRODUCT_LABELS } from '@/constants';
 import { formatCurrency } from '@/utils/format';
 import './trends.css';
@@ -28,9 +31,47 @@ const MOCK_MARGIN = [
 export default function TrendsPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('price');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  const maxPrice = Math.max(...MOCK_PRICES.map(d => Math.max(d.liquid_chlorine, d.hcl31, d.naclo10)));
-  const maxMargin = Math.max(...MOCK_MARGIN.map(d => Math.max(d.manual, d.system)));
+  const loadData = async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="trends-page">
+        <NavBar onBack={() => navigate(-1)}>趋势洞察</NavBar>
+        <div className="page-content">
+          <SkeletonCard rows={4} />
+          <SkeletonCard rows={4} />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="trends-page">
+        <NavBar onBack={() => navigate(-1)}>趋势洞察</NavBar>
+        <div className="page-content">
+          <ErrorRetry onRetry={loadData} />
+        </div>
+      </div>
+    );
+  }
 
   const priceChange = {
     liquid_chlorine: ((MOCK_PRICES[MOCK_PRICES.length - 1].liquid_chlorine - MOCK_PRICES[0].liquid_chlorine) / MOCK_PRICES[0].liquid_chlorine * 100).toFixed(1),
@@ -65,23 +106,18 @@ export default function TrendsPage() {
                 <span>📈</span>
                 <span>近7天价格走势</span>
               </div>
-              <div className="chart-container">
-                {MOCK_PRICES.map((d) => (
-                  <div key={d.date} className="chart-column">
-                    <div className="chart-bars">
-                      <div className="chart-bar" style={{ height: `${(d.liquid_chlorine / maxPrice) * 100}%`, background: '#1677ff' }} />
-                      <div className="chart-bar" style={{ height: `${(d.hcl31 / maxPrice) * 100}%`, background: '#52c41a' }} />
-                      <div className="chart-bar" style={{ height: `${(d.naclo10 / maxPrice) * 100}%`, background: '#faad14' }} />
-                    </div>
-                    <div className="chart-label">{d.date}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="chart-legend">
-                <span><span className="legend-dot" style={{ background: '#1677ff' }} />液氯</span>
-                <span><span className="legend-dot" style={{ background: '#52c41a' }} />盐酸</span>
-                <span><span className="legend-dot" style={{ background: '#faad14' }} />次氯</span>
-              </div>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={MOCK_PRICES}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`${value} 元/吨`, '']} />
+                  <Legend />
+                  <Line type="monotone" dataKey="liquid_chlorine" name="液氯" stroke="#1677ff" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="hcl31" name="盐酸" stroke="#52c41a" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="naclo10" name="次氯" stroke="#faad14" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
             </Card>
           </Tabs.Tab>
 
@@ -92,21 +128,17 @@ export default function TrendsPage() {
                 <span>💰</span>
                 <span>边际贡献趋势</span>
               </div>
-              <div className="chart-container">
-                {MOCK_MARGIN.map((d) => (
-                  <div key={d.date} className="chart-column">
-                    <div className="chart-bars">
-                      <div className="chart-bar wide" style={{ height: `${(d.manual / maxMargin) * 100}%`, background: '#d9d9d9' }} />
-                      <div className="chart-bar wide" style={{ height: `${(d.system / maxMargin) * 100}%`, background: '#1677ff' }} />
-                    </div>
-                    <div className="chart-label">{d.date}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="chart-legend">
-                <span><span className="legend-dot" style={{ background: '#d9d9d9' }} />人工</span>
-                <span><span className="legend-dot" style={{ background: '#1677ff' }} />系统</span>
-              </div>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={MOCK_MARGIN}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [formatCurrency(Number(value)), '']} />
+                  <Legend />
+                  <Bar dataKey="manual" name="人工" fill="#d9d9d9" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="system" name="系统" fill="#1677ff" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </Card>
 
             {/* 累计趋势 */}
@@ -145,17 +177,35 @@ export default function TrendsPage() {
 
 function SensitivityCard() {
   const [sensitivityData, setSensitivityData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      const mockData = [
+        { product: '液氯', shock: -10, margin: 185000 },
+        { product: '液氯', shock: -5, margin: 192000 },
+        { product: '液氯', shock: 0, margin: 200800 },
+        { product: '液氯', shock: 5, margin: 208000 },
+        { product: '液氯', shock: 10, margin: 215000 },
+      ];
+      setSensitivityData(mockData);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const mockData = [
-      { product: '液氯', shock: -10, margin: 185000 },
-      { product: '液氯', shock: -5, margin: 192000 },
-      { product: '液氯', shock: 0, margin: 200800 },
-      { product: '液氯', shock: 5, margin: 208000 },
-      { product: '液氯', shock: 10, margin: 215000 },
-    ];
-    setSensitivityData(mockData);
+    fetchData();
   }, []);
+
+  if (loading) return <SkeletonCard rows={3} />;
+  if (error) return <ErrorRetry onRetry={fetchData} />;
 
   return (
     <Card style={{ margin: '12px' }}>
@@ -166,20 +216,15 @@ function SensitivityCard() {
       <div style={{ fontSize: 13, color: '#666', marginBottom: 12 }}>
         液氯价格波动对边际贡献的影响
       </div>
-      <div className="sensitivity-list">
-        {sensitivityData.map((d, i) => (
-          <div key={i} className="sensitivity-row">
-            <span className="sensitivity-shock">{d.shock > 0 ? '+' : ''}{d.shock}%</span>
-            <div className="sensitivity-bar-bg">
-              <div
-                className="sensitivity-bar-fill"
-                style={{ width: `${((d.margin - 180000) / 40000) * 100}%` }}
-              />
-            </div>
-            <span className="sensitivity-margin">{formatCurrency(d.margin)}</span>
-          </div>
-        ))}
-      </div>
+      <ResponsiveContainer width="100%" height={200}>
+        <BarChart data={sensitivityData}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="shock" tickFormatter={(v) => `${v > 0 ? '+' : ''}${v}%`} />
+          <YAxis />
+          <Tooltip formatter={(value) => [formatCurrency(Number(value)), '']} />
+          <Bar dataKey="margin" name="边际贡献" fill="#1677ff" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
     </Card>
   );
 }

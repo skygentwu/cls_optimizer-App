@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NavBar, Card, Tag, Button, Selector } from 'antd-mobile';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { SkeletonCard } from '@/components/common/SkeletonCard';
+import { ErrorRetry } from '@/components/common/ErrorRetry';
 import { runForecastAnalysis, generateForecastLlmAdvice } from '@/api/client';
 import { PRODUCT_LABELS } from '@/constants';
 import { formatCurrency, formatTons } from '@/utils/format';
@@ -17,6 +20,17 @@ const MOCK_FORECAST = [
   { date: '2026-06-09', liquid_chlorine: 248, hcl31: 178, naclo10: 385, margin: 215000 },
 ];
 
+// 模拟预测产量
+const MOCK_FORECAST_PRODUCTION = [
+  { date: '2026-06-03', liquid_chlorine: 52, hcl31: 85, naclo10: 33 },
+  { date: '2026-06-04', liquid_chlorine: 53, hcl31: 84, naclo10: 34 },
+  { date: '2026-06-05', liquid_chlorine: 51, hcl31: 86, naclo10: 32 },
+  { date: '2026-06-06', liquid_chlorine: 54, hcl31: 83, naclo10: 35 },
+  { date: '2026-06-07', liquid_chlorine: 55, hcl31: 87, naclo10: 31 },
+  { date: '2026-06-08', liquid_chlorine: 53, hcl31: 85, naclo10: 33 },
+  { date: '2026-06-09', liquid_chlorine: 56, hcl31: 88, naclo10: 30 },
+];
+
 const RECOMMENDED = {
   liquid_chlorine: 52,
   hcl31: 85,
@@ -26,34 +40,38 @@ const RECOMMENDED = {
 export default function ForecastPage() {
   const navigate = useNavigate();
   const [days, setDays] = useState<'7' | '14' | '30'>('7');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [adviceLoading, setAdviceLoading] = useState(false);
   const [llmAdvice, setLlmAdvice] = useState('');
 
   const filtered = MOCK_FORECAST.slice(0, Number(days));
+  const productionFiltered = MOCK_FORECAST_PRODUCTION.slice(0, Number(days));
   const avgMargin = filtered.reduce((s, d) => s + d.margin, 0) / filtered.length;
   const totalMargin = filtered.reduce((s, d) => s + d.margin, 0);
 
   const loadForecast = async () => {
     setLoading(true);
+    setError(false);
     try {
+      await new Promise((resolve) => setTimeout(resolve, 600));
       await runForecastAnalysis(Number(days));
-      // 处理真实数据
     } catch {
-      // 使用模拟数据
+      setError(true);
     } finally {
       setLoading(false);
     }
   };
 
   const loadLlmAdvice = async () => {
-    setLoading(true);
+    setAdviceLoading(true);
     try {
       const res = await generateForecastLlmAdvice(Number(days));
       setLlmAdvice(res.answer || '基于预测分析，建议维持当前产量配比，液氯价格预计继续上行，可适当增加盐酸产量以优化边际贡献。');
     } catch {
       setLlmAdvice('基于预测分析，建议维持当前产量配比，液氯价格预计继续上行，可适当增加盐酸产量以优化边际贡献。');
     } finally {
-      setLoading(false);
+      setAdviceLoading(false);
     }
   };
 
@@ -61,6 +79,30 @@ export default function ForecastPage() {
     loadForecast();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [days]);
+
+  if (loading) {
+    return (
+      <div className="forecast-page">
+        <NavBar onBack={() => navigate(-1)}>预测分析</NavBar>
+        <div className="page-content">
+          <SkeletonCard rows={3} />
+          <SkeletonCard rows={4} />
+          <SkeletonCard rows={4} />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="forecast-page">
+        <NavBar onBack={() => navigate(-1)}>预测分析</NavBar>
+        <div className="page-content">
+          <ErrorRetry onRetry={loadForecast} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="forecast-page">
@@ -109,25 +151,44 @@ export default function ForecastPage() {
           </div>
         </Card>
 
-        {/* 价格预测趋势 */}
+        {/* 价格预测趋势 - LineChart */}
         <Card style={{ margin: '12px' }}>
           <div className="card-title">
             <span>📈</span>
             <span>价格预测趋势</span>
           </div>
-          <div className="forecast-list">
-            {filtered.map((d) => (
-              <div key={d.date} className="forecast-row">
-                <div className="forecast-date">{d.date.slice(5)}</div>
-                <div className="forecast-prices">
-                  <span className="price-tag blue">液氯 {d.liquid_chlorine}</span>
-                  <span className="price-tag green">盐酸 {d.hcl31}</span>
-                  <span className="price-tag orange">次氯 {d.naclo10}</span>
-                </div>
-                <div className="forecast-margin">{formatCurrency(d.margin)}</div>
-              </div>
-            ))}
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={filtered}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" tickFormatter={(v) => v.slice(5)} />
+              <YAxis />
+              <Tooltip formatter={(value) => [`${value} 元/吨`, '']} />
+              <Legend />
+              <Line type="monotone" dataKey="liquid_chlorine" name="液氯" stroke="#1677ff" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="hcl31" name="盐酸" stroke="#52c41a" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="naclo10" name="次氯" stroke="#faad14" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </Card>
+
+        {/* 预测产量 - BarChart */}
+        <Card style={{ margin: '12px' }}>
+          <div className="card-title">
+            <span>📊</span>
+            <span>预测产量</span>
           </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={productionFiltered}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" tickFormatter={(v) => v.slice(5)} />
+              <YAxis />
+              <Tooltip formatter={(value) => [`${value} 吨`, '']} />
+              <Legend />
+              <Bar dataKey="liquid_chlorine" name="液氯" fill="#1677ff" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="hcl31" name="盐酸" fill="#52c41a" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="naclo10" name="次氯" fill="#faad14" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </Card>
 
         {/* AI 预测建议 */}
@@ -140,7 +201,7 @@ export default function ForecastPage() {
           {llmAdvice ? (
             <div className="advice-content">{llmAdvice}</div>
           ) : (
-            <Button color="primary" block loading={loading} onClick={loadLlmAdvice}>
+            <Button color="primary" block loading={adviceLoading} onClick={loadLlmAdvice}>
               生成 AI 预测建议
             </Button>
           )}

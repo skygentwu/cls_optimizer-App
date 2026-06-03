@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { NavBar, Card, Tag, Toast, Button, Badge } from 'antd-mobile';
 import { useAppStore } from '@/stores/appStore';
 import { formatCurrency } from '@/utils/format';
+import { SkeletonCard } from '@/components/common/SkeletonCard';
+import { ErrorRetry } from '@/components/common/ErrorRetry';
 import './insights.css';
 
 // 模拟预警数据
@@ -23,7 +25,25 @@ export default function InsightsPage() {
   const navigate = useNavigate();
   const store = useAppStore();
   const [report, setReport] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleRetry = () => {
+    setError(false);
+    setLoading(true);
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  };
 
   const loadReport = async () => {
     const rec = store.recommendation;
@@ -31,7 +51,7 @@ export default function InsightsPage() {
       Toast.show({ icon: 'fail', content: '请先在概览页获取推荐数据' });
       return;
     }
-    setLoading(true);
+    setReportLoading(true);
     try {
       // 使用模拟数据（实际应调用 generateAdvisorReport API）
       setReport(`## 今日经营建议
@@ -52,7 +72,7 @@ export default function InsightsPage() {
 - 次氯酸钠需求有波动风险，建议密切关注市场动态
 - 若液氯价格继续上升超过 250 元/吨，建议重新评估配比`);
     } finally {
-      setLoading(false);
+      setReportLoading(false);
     }
   };
 
@@ -62,6 +82,26 @@ export default function InsightsPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store.recommendation]);
+
+  if (loading) {
+    return (
+      <div className="insights-page">
+        <NavBar onBack={() => navigate(-1)}>智能建议</NavBar>
+        <SkeletonCard rows={3} />
+        <SkeletonCard rows={3} />
+        <SkeletonCard rows={3} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="insights-page">
+        <NavBar onBack={() => navigate(-1)}>智能建议</NavBar>
+        <ErrorRetry onRetry={handleRetry} />
+      </div>
+    );
+  }
 
   return (
     <div className="insights-page">
@@ -118,7 +158,7 @@ export default function InsightsPage() {
             </div>
           ) : (
             <div className="empty-state">
-              <Button color="primary" loading={loading} onClick={loadReport}>
+              <Button color="primary" loading={reportLoading} onClick={loadReport}>
                 生成今日建议
               </Button>
             </div>

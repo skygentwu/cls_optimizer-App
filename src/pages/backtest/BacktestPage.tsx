@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NavBar, Card, Tag, Selector } from 'antd-mobile';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { SkeletonCard } from '@/components/common/SkeletonCard';
+import { ErrorRetry } from '@/components/common/ErrorRetry';
 import { fetchBacktestRange, runBacktestAnalysis } from '@/api/client';
 import { formatCurrency } from '@/utils/format';
 import './backtest.css';
@@ -22,7 +25,9 @@ const MOCK_BACKTEST = [
 export default function BacktestPage() {
   const navigate = useNavigate();
   const [range, setRange] = useState<'7' | '14' | '30'>('14');
-  const [data] = useState(MOCK_BACKTEST);
+  const [data, setData] = useState(MOCK_BACKTEST);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const filtered = data.slice(0, Number(range));
   const totalDiff = filtered.reduce((s, d) => s + d.diff, 0);
@@ -31,14 +36,19 @@ export default function BacktestPage() {
   const winRate = (filtered.filter(d => d.system > d.manual).length / filtered.length * 100).toFixed(0);
 
   const loadBacktest = async () => {
+    setLoading(true);
+    setError(false);
     try {
+      await new Promise((resolve) => setTimeout(resolve, 600));
       await fetchBacktestRange();
       const analysis = await runBacktestAnalysis();
       if (analysis.detail_records) {
-        // 处理真实数据
+        setData(analysis.detail_records as typeof MOCK_BACKTEST);
       }
     } catch {
-      // 使用模拟数据
+      setError(true);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -46,6 +56,30 @@ export default function BacktestPage() {
     loadBacktest();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (loading) {
+    return (
+      <div className="backtest-page">
+        <NavBar onBack={() => navigate(-1)}>历史回测</NavBar>
+        <div className="page-content">
+          <SkeletonCard rows={3} />
+          <SkeletonCard rows={4} />
+          <SkeletonCard rows={4} />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="backtest-page">
+        <NavBar onBack={() => navigate(-1)}>历史回测</NavBar>
+        <div className="page-content">
+          <ErrorRetry onRetry={loadBacktest} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="backtest-page">
@@ -94,27 +128,40 @@ export default function BacktestPage() {
           />
         </div>
 
-        {/* 趋势图 */}
+        {/* 收益趋势对比 - LineChart */}
         <Card style={{ margin: '12px' }}>
           <div className="card-title">
             <span>📈</span>
             <span>收益趋势对比</span>
           </div>
-          <div className="chart-container">
-            {filtered.map((d) => (
-              <div key={d.date} className="chart-column">
-                <div className="chart-bars">
-                  <div className="chart-bar manual" style={{ height: `${(d.manual / 220000) * 100}%` }} />
-                  <div className="chart-bar system" style={{ height: `${(d.system / 220000) * 100}%` }} />
-                </div>
-                <div className="chart-label">{d.date.slice(5)}</div>
-              </div>
-            ))}
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={filtered}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" tickFormatter={(v) => v.slice(5)} />
+              <YAxis />
+              <Tooltip formatter={(value) => [formatCurrency(Number(value)), '']} />
+              <Legend />
+              <Line type="monotone" dataKey="manual" name="人工" stroke="#d9d9d9" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="system" name="系统" stroke="#1677ff" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </Card>
+
+        {/* 日收益差异 - BarChart */}
+        <Card style={{ margin: '12px' }}>
+          <div className="card-title">
+            <span>📊</span>
+            <span>日收益差异</span>
           </div>
-          <div className="chart-legend">
-            <span><span className="legend-dot" style={{ background: '#d9d9d9' }} />人工</span>
-            <span><span className="legend-dot" style={{ background: '#1677ff' }} />系统</span>
-          </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={filtered}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" tickFormatter={(v) => v.slice(5)} />
+              <YAxis />
+              <Tooltip formatter={(value) => [formatCurrency(Number(value)), '']} />
+              <Bar dataKey="diff" name="差异" fill="#52c41a" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </Card>
 
         {/* 明细表格 */}

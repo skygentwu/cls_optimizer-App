@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NavBar, Card, Tag, Toast, Button } from 'antd-mobile';
+import { SkeletonCard } from '@/components/common/SkeletonCard';
+import { ErrorRetry } from '@/components/common/ErrorRetry';
 
 import './report.css';
 
@@ -45,6 +47,24 @@ export default function ReportPage() {
   const navigate = useNavigate();
   const [report, setReport] = useState('');
   const [generating, setGenerating] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleRetry = () => {
+    setError(false);
+    setLoading(true);
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  };
 
   const generateReport = async () => {
     setGenerating(true);
@@ -59,6 +79,26 @@ export default function ReportPage() {
       setGenerating(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="report-page">
+        <NavBar onBack={() => navigate(-1)}>经营报告</NavBar>
+        <SkeletonCard rows={3} />
+        <SkeletonCard rows={3} />
+        <SkeletonCard rows={3} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="report-page">
+        <NavBar onBack={() => navigate(-1)}>经营报告</NavBar>
+        <ErrorRetry onRetry={handleRetry} />
+      </div>
+    );
+  }
 
   return (
     <div className="report-page">

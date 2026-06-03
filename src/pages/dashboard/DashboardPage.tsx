@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { NavBar, Card, Tag, Toast, PullToRefresh, Grid } from 'antd-mobile';
 import {
   HistogramOutline,
@@ -11,15 +11,23 @@ import {
   FileOutline,
 } from 'antd-mobile-icons';
 import { useNavigate } from 'react-router-dom';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell,
+} from 'recharts';
 import { useAppStore } from '@/stores/appStore';
 import { fetchDecisionModes, recommendDecision, fetchPrices, evaluateManualPlan } from '@/api/client';
 import { PRODUCT_LABELS, DEFAULT_NAOH_DAILY } from '@/constants';
 import { formatCurrency, formatTons } from '@/utils/format';
+import { SkeletonCard, SkeletonGrid } from '@/components/common/SkeletonCard';
+import { ErrorRetry } from '@/components/common/ErrorRetry';
 import './dashboard.css';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const store = useAppStore();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -27,6 +35,8 @@ export default function DashboardPage() {
   }, []);
 
   const loadDashboardData = async () => {
+    setLoading(true);
+    setError(false);
     store.setGlobalLoading(true);
     try {
       const [modes, priceRes] = await Promise.all([
@@ -62,8 +72,10 @@ export default function DashboardPage() {
         // ignore
       }
     } catch {
+      setError(true);
       Toast.show({ icon: 'fail', content: '数据加载失败' });
     } finally {
+      setLoading(false);
       store.setGlobalLoading(false);
     }
   };
@@ -71,6 +83,24 @@ export default function DashboardPage() {
   const rec = store.recommendation;
   const manual = store.manualResult;
   const diff = manual ? manual.totalMargin - (rec?.total_margin ?? 0) : 0;
+
+  // 边际贡献对比图表数据
+  const marginCompareData = [
+    { name: '系统推荐', value: rec?.total_margin ?? 0, fill: '#1677ff' },
+    { name: '人工方案', value: manual?.totalMargin ?? 0, fill: '#999' },
+  ];
+
+  // 产品产量饼图数据
+  const productPieData = rec?.products
+    ? Object.entries(rec.products)
+        .filter(([, v]) => (v as number) > 0)
+        .map(([key, value]) => ({
+          name: PRODUCT_LABELS[key as keyof typeof PRODUCT_LABELS] || key,
+          value: Math.round(value as number),
+        }))
+    : [];
+
+  const PIE_COLORS = ['#1677ff', '#52c41a', '#faad14', '#f5222d'];
 
   const quickCards = [
     { title: '决策对比', icon: <HistogramOutline />, color: '#1677ff', path: '/compare' },
@@ -91,6 +121,18 @@ export default function DashboardPage() {
 
       <PullToRefresh onRefresh={loadDashboardData}>
         <div className="dashboard-content">
+          {loading && (
+            <>
+              <SkeletonCard rows={2} />
+              <SkeletonCard rows={3} />
+              <SkeletonGrid count={4} />
+            </>
+          )}
+          {error && !loading && (
+            <ErrorRetry message="首页数据加载失败，请检查网络连接" onRetry={loadDashboardData} />
+          )}
+          {!loading && !error && (
+            <>
           {/* 核心指标 */}
           <Card className="hero-card" style={{ margin: '12px' }}>
             <div className="hero-label">今日决策收益对比</div>
@@ -123,6 +165,69 @@ export default function DashboardPage() {
               <div className="compare-unit">边际贡献/天</div>
             </Card>
           </div>
+
+          {/* 边际贡献对比图表 */}
+          {rec && (
+            <Card style={{ margin: '12px' }}>
+              <div className="card-title">
+                <span>📊</span>
+                <span>边际贡献对比</span>
+              </div>
+              <div style={{ height: 160, width: '100%' }}>
+                <ResponsiveContainer>
+                  <BarChart data={marginCompareData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" tickFormatter={(v: number) => `¥${(v / 1000).toFixed(0)}k`} />
+                    <YAxis type="category" dataKey="name" width={70} />
+                    <Tooltip formatter={(value) => [`¥${Number(value).toLocaleString()}`, '边际贡献']} />
+                    <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24}>
+                      {marginCompareData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          )}
+
+          {/* 产品产量分布 */}
+          {productPieData.length > 0 && (
+            <Card style={{ margin: '12px' }}>
+              <div className="card-title">
+                <span>🥧</span>
+                <span>产量分布</span>
+              </div>
+              <div style={{ height: 200, width: '100%' }}>
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie
+                      data={productPieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={70}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {productPieData.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`${Number(value)} 吨`, '产量']} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
+                {productPieData.map((item, i) => (
+                  <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: PIE_COLORS[i % PIE_COLORS.length] }} />
+                    <span>{item.name} {item.value}吨</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
 
           {/* 推荐产量 */}
           <Card style={{ margin: '12px' }}>
@@ -189,6 +294,8 @@ export default function DashboardPage() {
               ))}
             </Grid>
           </Card>
+            </>
+          )}
         </div>
       </PullToRefresh>
     </div>

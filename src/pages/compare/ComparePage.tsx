@@ -1,8 +1,11 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NavBar, Card, Tag } from 'antd-mobile';
 import { useAppStore } from '@/stores/appStore';
 import { PRODUCT_LABELS } from '@/constants';
 import { formatCurrency, formatTons } from '@/utils/format';
+import { SkeletonCard } from '@/components/common/SkeletonCard';
+import { ErrorRetry } from '@/components/common/ErrorRetry';
 import './compare.css';
 
 // 模拟历史对比数据（实际应从后端获取）
@@ -20,9 +23,48 @@ export default function ComparePage() {
   const rec = store.recommendation;
   const manual = store.manualResult;
 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleRetry = () => {
+    setError(false);
+    setLoading(true);
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  };
+
   const totalDiff = MOCK_HISTORY.reduce((sum, d) => sum + d.diff, 0);
   const avgDiff = totalDiff / MOCK_HISTORY.length;
   const maxDiffDay = MOCK_HISTORY.reduce((max, d) => d.diff > max.diff ? d : max, MOCK_HISTORY[0]);
+
+  if (loading) {
+    return (
+      <div className="compare-page">
+        <NavBar onBack={() => navigate(-1)}>决策对比分析</NavBar>
+        <SkeletonCard rows={3} />
+        <SkeletonCard rows={3} />
+        <SkeletonCard rows={3} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="compare-page">
+        <NavBar onBack={() => navigate(-1)}>决策对比分析</NavBar>
+        <ErrorRetry onRetry={handleRetry} />
+      </div>
+    );
+  }
 
   return (
     <div className="compare-page">
