@@ -1,4 +1,13 @@
-// 基于 cls_optimizer/frontend/src/api/client.ts 复用，适配移动端
+/**
+ * 移动端统一 HTTP 客户端
+ * 基于原生 fetch 封装，所有后端 API 调用集中在此文件
+ *
+ * 特性：
+ * - 自动注入 JWT Authorization Header（从 authStore 读取）
+ * - 15 秒请求超时（AbortController）
+ * - 401 自动清除登录态并跳转登录页
+ * - API Base URL 动态拼接，支持开发代理/模拟器/生产环境
+ */
 
 import { useAuthStore } from "@/stores/authStore";
 import { useAppStore } from "@/stores/appStore";
@@ -41,8 +50,18 @@ import type {
   ApcSendResponse,
 } from "@/types";
 
+/**
+ * 获取当前配置的 API 基础地址
+ * 优先级：appStore.apiBaseUrl > 环境变量 VITE_API_BASE_URL > 空字符串
+ */
 const getApiBase = () => useAppStore.getState().apiBaseUrl || import.meta.env.VITE_API_BASE_URL || "";
 
+/**
+ * 拼接完整的请求 URL
+ * - 无 base 时直接返回 path（开发环境走 Vite proxy）
+ * - base 以 /api 结尾且 path 以 /api/ 开头时自动去重，避免 /api/api/xxx
+ * - 去除 base 末尾多余斜杠
+ */
 export function buildApiUrl(path: string): string {
   const base = String(getApiBase()).replace(/\/+$/, "");
   if (!base) {
@@ -54,6 +73,10 @@ export function buildApiUrl(path: string): string {
   return `${base}${path}`;
 }
 
+/**
+ * 自定义 API 异常类
+ * 用于区分 HTTP 状态码和业务错误信息，上层可通过 err.status 判断错误类型
+ */
 export class ApiError extends Error {
   status: number;
 
@@ -63,6 +86,13 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * 通用请求函数（所有 API 的底层封装）
+ * - 自动读取 token 注入 Authorization
+ * - 15 秒超时中断（防止后端长时间计算导致页面假死）
+ * - 401 时自动清除登录态并跳转到 #/login
+ * - 网络异常时通过 finally 确保 timer 被清理，避免内存泄漏
+ */
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = useAuthStore.getState().token;
   const controller = new AbortController();
@@ -79,6 +109,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     });
     if (!response.ok) {
       const body = await response.json().catch(() => ({}));
+      // 401 且非登录接口：清除登录态并跳转，避免死循环
       if (response.status === 401 && !path.includes('/auth/login')) {
         useAuthStore.getState().clearAuth();
         window.location.hash = '#/login';
@@ -88,6 +119,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     }
     return response.json() as Promise<T>;
   } finally {
+    // 无论成功或异常，都必须清理定时器，防止 AbortController 被长期引用
     clearTimeout(timer);
   }
 }

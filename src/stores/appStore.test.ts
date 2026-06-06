@@ -1,10 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useAppStore } from './appStore';
 
+/**
+ * appStore 测试集
+ * 功能：验证全局业务状态的默认值、状态更新、localStorage 持久化
+ */
 describe('appStore', () => {
   beforeEach(() => {
     localStorage.clear();
-    // Reset store to fresh state by mutating each field
+    // 每个测试前重置 store 到初始状态，避免测试间数据互相影响
     void useAppStore.getState();
     useAppStore.setState({
       naohDaily: 822,
@@ -20,7 +24,7 @@ describe('appStore', () => {
     });
   });
 
-  it('has correct defaults', () => {
+  it('默认值正确', () => {
     const s = useAppStore.getState();
     expect(s.naohDaily).toBe(822);
     expect(s.decisionName).toBe('利润最大化（默认）');
@@ -28,42 +32,43 @@ describe('appStore', () => {
     expect(s.theme).toBe('light');
   });
 
-  it('setNaohDaily updates value', () => {
+  it('setNaohDaily 更新烧碱日产量', () => {
     useAppStore.getState().setNaohDaily(1000);
     expect(useAppStore.getState().naohDaily).toBe(1000);
   });
 
-  it('setApiBaseUrl persists to localStorage', () => {
+  it('setApiBaseUrl 同时持久化到 localStorage', () => {
     useAppStore.getState().setApiBaseUrl('http://192.168.1.1:8000');
     expect(useAppStore.getState().apiBaseUrl).toBe('http://192.168.1.1:8000');
     expect(localStorage.getItem('cls_api_base')).toBe('http://192.168.1.1:8000');
   });
 
-  it('setTheme updates attribute and localStorage', () => {
+  it('setTheme 更新主题并写入 localStorage、设置 html data-theme', () => {
     useAppStore.getState().setTheme('dark');
     expect(useAppStore.getState().theme).toBe('dark');
     expect(localStorage.getItem('cls_theme')).toBe('dark');
+    // 验证 document.documentElement.setAttribute 被调用（在 setupTests.ts 中被 mock）
     expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'dark');
   });
 
-  it('toggleTheme switches light to dark', () => {
+  it('toggleTheme 从 light 切换到 dark', () => {
     useAppStore.setState({ theme: 'light' });
     useAppStore.getState().toggleTheme();
     expect(useAppStore.getState().theme).toBe('dark');
   });
 
-  it('toggleTheme switches dark to light', () => {
+  it('toggleTheme 从 dark 切换到 light', () => {
     useAppStore.setState({ theme: 'dark' });
     useAppStore.getState().toggleTheme();
     expect(useAppStore.getState().theme).toBe('light');
   });
 
-  it('setGlobalLoading toggles loading state', () => {
+  it('setGlobalLoading 切换全局加载状态', () => {
     useAppStore.getState().setGlobalLoading(true);
     expect(useAppStore.getState().globalLoading).toBe(true);
   });
 
-  it('setRecommendation stores result', () => {
+  it('setRecommendation 存储系统推荐结果', () => {
     const mockRec = {
       decision_name: 'test',
       products: { liquid_chlorine: 10, hcl31: 20, naclo10: 30 },
