@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { NavBar, List, Button, Modal, Toast, Input, Switch } from 'antd-mobile';
+import { useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { NavBar, List, Button, Modal, Toast, Input, Switch, Selector, Space } from 'antd-mobile';
 import {
   UserOutline,
   CheckShieldOutline,
@@ -16,12 +17,57 @@ import { logout } from '@/api/client';
 import { useNavigate } from 'react-router-dom';
 import './profile.css';
 
+const PRESETS = [
+  { label: '自动判断', value: 'auto', desc: '浏览器走Proxy，模拟器用10.0.2.2' },
+  { label: '模拟器', value: 'emulator', desc: 'http://10.0.2.2:8000' },
+  { label: '本机', value: 'localhost', desc: 'http://localhost:8000' },
+  { label: '自定义', value: 'custom', desc: '手动输入地址' },
+];
+
+async function testConnection(baseUrl: string): Promise<boolean> {
+  try {
+    const url = baseUrl ? `${baseUrl.replace(/\/$/, '')}/healthz` : '/healthz';
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 3000);
+    const res = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(timer);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+function getPresetFromUrl(url: string): string {
+  if (!url) return 'auto';
+  if (url.includes('10.0.2.2')) return 'emulator';
+  if (url.includes('localhost')) return 'localhost';
+  return 'custom';
+}
+
+function getUrlFromPreset(preset: string): string {
+  switch (preset) {
+    case 'emulator': return 'http://10.0.2.2:8000';
+    case 'localhost': return 'http://localhost:8000';
+    case 'auto':
+    default: return '';
+  }
+}
+
 export default function ProfilePage() {
   const { user, clearAuth } = useAuthStore();
   const { apiBaseUrl, setApiBaseUrl, theme, toggleTheme } = useAppStore();
   const navigate = useNavigate();
   const [editingApi, setEditingApi] = useState(false);
   const [tempUrl, setTempUrl] = useState(apiBaseUrl);
+  const [preset, setPreset] = useState(getPresetFromUrl(apiBaseUrl));
+  const [testing, setTesting] = useState(false);
+  const [testOk, setTestOk] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setTempUrl(apiBaseUrl);
+    setPreset(getPresetFromUrl(apiBaseUrl));
+    setTestOk(null);
+  }, [apiBaseUrl, editingApi]);
 
   const handleLogout = async () => {
     try {
@@ -42,17 +88,36 @@ export default function ProfilePage() {
     });
   };
 
+  const applyPreset = (val: string) => {
+    setPreset(val);
+    setTempUrl(getUrlFromPreset(val));
+    setTestOk(null);
+  };
+
+  const handleTest = async () => {
+    setTesting(true);
+    setTestOk(null);
+    const ok = await testConnection(tempUrl);
+    setTestOk(ok);
+    setTesting(false);
+    Toast.show({ icon: ok ? 'success' : 'fail', content: ok ? '连接成功' : '连接失败' });
+  };
+
   const handleSaveApiUrl = () => {
     setApiBaseUrl(tempUrl.trim());
     setEditingApi(false);
-    Toast.show({ icon: 'success', content: '后端地址已更新，请刷新页面生效' });
+    Toast.show({ icon: 'success', content: '地址已更新，正在重启应用...' });
+    setTimeout(() => window.location.reload(), 800);
   };
 
   const handleResetApiUrl = () => {
     setApiBaseUrl('');
     setTempUrl('');
+    setPreset('auto');
     Toast.show({ icon: 'success', content: '已重置为默认地址' });
   };
+
+  const isNative = Capacitor.isNativePlatform();
 
   return (
     <div className="profile-page">
@@ -94,7 +159,7 @@ export default function ProfilePage() {
           <List header="网络配置">
             <List.Item
               prefix={<SystemQRcodeOutline />}
-              description={apiBaseUrl || '默认（本机）'}
+              description={apiBaseUrl || (isNative ? '自动（模拟器）' : '自动（浏览器Proxy）')}
               arrow
               onClick={() => setEditingApi(true)}
             >
@@ -108,17 +173,44 @@ export default function ProfilePage() {
           title="配置后端地址"
           content={
             <div style={{ padding: '8px 0' }}>
-              <Input
-                placeholder="如: https://clsoptimizer.loca.lt"
-                value={tempUrl}
-                onChange={(val) => setTempUrl(val)}
-                clearable
+              <Selector
+                options={PRESETS.map(p => ({ label: p.label, value: p.value, description: p.desc }))}
+                value={[preset]}
+                onChange={(v) => applyPreset(String(v[0]))}
+                showCheckMark={false}
+                style={{ marginBottom: 12 }}
               />
-              <div style={{ marginTop: 8, fontSize: 12, color: '#999' }}>
-                留空则使用默认地址（localhost:8000）
-              </div>
-              <div style={{ marginTop: 4, fontSize: 12, color: '#1677ff' }}>
-                当前: {apiBaseUrl || '默认'}
+
+              {preset === 'custom' && (
+                <Input
+                  id="apiBaseUrl"
+                  name="apiBaseUrl"
+                  placeholder="如: http://192.168.1.5:8000"
+                  value={tempUrl}
+                  onChange={(val) => { setTempUrl(val); setTestOk(null); }}
+                  clearable
+                  style={{ marginBottom: 8 }}
+                />
+              )}
+
+              <Space block justify="between" align="center">
+                <div style={{ fontSize: 12, color: '#1677ff' }}>
+                  当前: {tempUrl || '自动判断'}
+                </div>
+                <Button
+                  size="mini"
+                  color={testOk === true ? 'success' : testOk === false ? 'danger' : 'primary'}
+                  loading={testing}
+                  onClick={handleTest}
+                >
+                  {testOk === true ? '已连通' : testOk === false ? '不通' : '测试连接'}
+                </Button>
+              </Space>
+
+              <div style={{ marginTop: 8, fontSize: 11, color: '#999' }}>
+                {isNative
+                  ? '模拟器选「模拟器」，真机请选「自定义」并填电脑局域网IP'
+                  : '浏览器开发保持「自动判断」即可，由 Vite Proxy 转发'}
               </div>
             </div>
           }

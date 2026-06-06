@@ -38,7 +38,7 @@ export default function AppShell({ children }: AppShellProps) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <main style={{ flex: 1, overflowY: 'auto', paddingBottom: 60 }} {...swipeHandlers}>
+      <main style={{ flex: 1, overflowY: 'auto', paddingBottom: 'calc(60px + env(safe-area-inset-bottom))' }} {...swipeHandlers}>
         {children}
       </main>
       <TabBar

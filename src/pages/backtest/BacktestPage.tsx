@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Card, Tag, Selector } from 'antd-mobile';
+import { NavBar, Card, Tag, Selector, Toast } from 'antd-mobile';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { SkeletonCard } from '@/components/common/SkeletonCard';
 import { ErrorRetry } from '@/components/common/ErrorRetry';
@@ -8,7 +8,7 @@ import { fetchBacktestRange, runBacktestAnalysis } from '@/api/client';
 import { formatCurrency } from '@/utils/format';
 import './backtest.css';
 
-// 模拟回测数据
+// FIXME: 初版演示数据，后端 /api/backtest/analysis 接口就绪后应完全移除
 const MOCK_BACKTEST = [
   { date: '2026-05-01', manual: 182000, system: 195000, diff: 13000, products: { liquid_chlorine: 45, hcl31: 82, naclo10: 28 } },
   { date: '2026-05-02', manual: 185000, system: 198000, diff: 13000, products: { liquid_chlorine: 48, hcl31: 80, naclo10: 30 } },
@@ -25,7 +25,7 @@ const MOCK_BACKTEST = [
 export default function BacktestPage() {
   const navigate = useNavigate();
   const [range, setRange] = useState<'7' | '14' | '30'>('14');
-  const [data, setData] = useState(MOCK_BACKTEST);
+  const [data, setData] = useState<typeof MOCK_BACKTEST>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -39,11 +39,15 @@ export default function BacktestPage() {
     setLoading(true);
     setError(false);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 600));
       await fetchBacktestRange();
       const analysis = await runBacktestAnalysis();
-      if (analysis.detail_records) {
-        setData(analysis.detail_records as typeof MOCK_BACKTEST);
+      const records = (analysis.detail_records || []) as typeof MOCK_BACKTEST;
+      if (records.length > 0) {
+        setData(records);
+      } else {
+        // 接口未返回数据时回退到演示数据并提示
+        Toast.show({ icon: 'fail', content: '暂无真实回测数据，显示演示数据' });
+        setData(MOCK_BACKTEST);
       }
     } catch {
       setError(true);

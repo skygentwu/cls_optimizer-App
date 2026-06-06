@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Form, Input, Button, Toast, NavBar } from 'antd-mobile';
-import { login } from '@/api/client';
+import { login, ApiError } from '@/api/client';
 import { useAuthStore } from '@/stores/authStore';
 import './login.css';
 
@@ -20,8 +20,13 @@ export default function LoginPage() {
       const res = await login(username, password);
       setAuth(res.access_token, res.user);
       Toast.show({ icon: 'success', content: '登录成功' });
-    } catch {
-      Toast.show({ icon: 'fail', content: '账号或密码错误' });
+    } catch (err) {
+      const msg = err instanceof ApiError && err.status === 401
+        ? '账号或密码错误'
+        : err instanceof ApiError
+        ? `请求失败 (${err.status})`
+        : '网络连接失败，请检查服务器地址';
+      Toast.show({ icon: 'fail', content: msg });
     } finally {
       setLoading(false);
     }
@@ -44,6 +49,8 @@ export default function LoginPage() {
           <Form layout="vertical">
             <Form.Item label="账号">
               <Input
+                id="username"
+                name="username"
                 placeholder="请输入账号"
                 value={username}
                 onChange={(val) => setUsername(val)}
@@ -52,6 +59,8 @@ export default function LoginPage() {
             </Form.Item>
             <Form.Item label="密码">
               <Input
+                id="password"
+                name="password"
                 type="password"
                 placeholder="请输入密码"
                 value={password}

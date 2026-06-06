@@ -8,14 +8,8 @@ import { SkeletonCard } from '@/components/common/SkeletonCard';
 import { ErrorRetry } from '@/components/common/ErrorRetry';
 import './compare.css';
 
-// 模拟历史对比数据（实际应从后端获取）
-const MOCK_HISTORY = [
-  { date: '2026-05-28', manual: 185200, system: 198500, diff: 13300 },
-  { date: '2026-05-29', manual: 182100, system: 201200, diff: 19100 },
-  { date: '2026-05-30', manual: 188000, system: 196800, diff: 8800 },
-  { date: '2026-05-31', manual: 190500, system: 203100, diff: 12600 },
-  { date: '2026-06-01', manual: 187300, system: 199400, diff: 12100 },
-];
+// FIXME: 后端暂无历史对比日度列表接口，待补充后替换为真实数据
+const MOCK_HISTORY: Array<{ date: string; manual: number; system: number; diff: number }> = [];
 
 export default function ComparePage() {
   const navigate = useNavigate();
@@ -43,8 +37,10 @@ export default function ComparePage() {
   };
 
   const totalDiff = MOCK_HISTORY.reduce((sum, d) => sum + d.diff, 0);
-  const avgDiff = totalDiff / MOCK_HISTORY.length;
-  const maxDiffDay = MOCK_HISTORY.reduce((max, d) => d.diff > max.diff ? d : max, MOCK_HISTORY[0]);
+  const avgDiff = MOCK_HISTORY.length > 0 ? totalDiff / MOCK_HISTORY.length : 0;
+  const maxDiffDay = MOCK_HISTORY.length > 0
+    ? MOCK_HISTORY.reduce((max, d) => d.diff > max.diff ? d : max, MOCK_HISTORY[0])
+    : null;
 
   if (loading) {
     return (
@@ -90,8 +86,10 @@ export default function ComparePage() {
           </Card>
           <Card style={{ flex: 1, textAlign: 'center' }}>
             <div className="metric-label">最大单日差异</div>
-            <div className="metric-value" style={{ color: '#52c41a' }}>+{formatCurrency(maxDiffDay.diff)}</div>
-            <div style={{ fontSize: 11, color: '#999' }}>{maxDiffDay.date}</div>
+            <div className="metric-value" style={{ color: '#52c41a' }}>
+              +{formatCurrency(maxDiffDay?.diff ?? 0)}
+            </div>
+            <div style={{ fontSize: 11, color: '#999' }}>{maxDiffDay?.date ?? '-'}</div>
           </Card>
         </div>
 

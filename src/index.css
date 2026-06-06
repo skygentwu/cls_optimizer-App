@@ -64,6 +64,10 @@ body {
   color: #1677ff;
 }
 
+.adm-tab-bar {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 [data-theme='dark'] .metric-label {
   color: rgba(255, 255, 255, 0.45);
 }
@@ -79,7 +83,7 @@ body {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 60px;
+  padding-bottom: calc(60px + env(safe-area-inset-bottom));
 }
 
 /* 数据高亮 */

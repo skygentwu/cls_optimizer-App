@@ -50,14 +50,16 @@ export default function RecommendationPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">烧碱折百日产量 (吨/天)</label>
-            <Stepper
-              value={localNaoh}
-              onChange={(val) => setLocalNaoh(val)}
-              min={100}
-              max={2000}
-              step={10}
-            />
+            <label className="form-label">
+              烧碱折百日产量 (吨/天)
+              <Stepper
+                value={localNaoh}
+                onChange={(val) => setLocalNaoh(val)}
+                min={100}
+                max={2000}
+                step={10}
+              />
+            </label>
           </div>
 
           <div className="form-group">
@@ -75,6 +77,7 @@ export default function RecommendationPage() {
                 <div key={key} className="price-input-item">
                   <label>{PRODUCT_LABELS[key as keyof typeof PRODUCT_LABELS]}</label>
                   <Stepper
+                    aria-label={PRODUCT_LABELS[key as keyof typeof PRODUCT_LABELS]}
                     value={value}
                     onChange={(val) =>
                       setLocalPrices((prev) => ({ ...prev, [key]: val }))

@@ -7,19 +7,9 @@ import { SkeletonCard } from '@/components/common/SkeletonCard';
 import { ErrorRetry } from '@/components/common/ErrorRetry';
 import './insights.css';
 
-// 模拟预警数据
-const ALERTS = [
-  { id: 1, level: 'warning', title: '液氯价格异常波动', desc: '近3日液氯价格上涨 4.4%，建议关注', time: '今天 09:30' },
-  { id: 2, level: 'success', title: '系统推荐收益提升', desc: '今日按系统推荐可多收益 ¥12,100', time: '今天 08:00' },
-  { id: 3, level: 'info', title: '预测分析已更新', desc: '未来7天价格预测已生成', time: '昨天 18:00' },
-];
-
-// 模拟历史建议
-const HISTORY_ADVICE = [
-  { date: '2026-06-01', summary: '建议增加盐酸产量至 85 吨/天，液氯减产 5 吨/天', diff: 12100 },
-  { date: '2026-05-31', summary: '液氯价格上涨趋势明显，建议维持当前产量配比', diff: 8800 },
-  { date: '2026-05-30', summary: '次氯酸钠需求下降，建议适当减产', diff: 6500 },
-];
+// FIXME: 初版暂无预警和历史建议接口，待后端提供后替换为真实数据
+const ALERTS: Array<{ id: number; level: string; title: string; desc: string; time: string }> = [];
+const HISTORY_ADVICE: Array<{ date: string; summary: string; diff: number }> = [];
 
 export default function InsightsPage() {
   const navigate = useNavigate();
@@ -113,19 +103,25 @@ export default function InsightsPage() {
           <div className="card-title">
             <span>🔔</span>
             <span>预警通知</span>
-            <Badge content={ALERTS.length} style={{ '--right': '-6px', '--top': '0px' }} />
+            {ALERTS.length > 0 && <Badge content={ALERTS.length} style={{ '--right': '-6px', '--top': '0px' }} />}
           </div>
-          <div className="alert-list">
-            {ALERTS.map((alert) => (
-              <div key={alert.id} className={`alert-item alert-${alert.level}`}>
-                <div className="alert-header">
-                  <span className="alert-title">{alert.title}</span>
-                  <span className="alert-time">{alert.time}</span>
+          {ALERTS.length > 0 ? (
+            <div className="alert-list">
+              {ALERTS.map((alert) => (
+                <div key={alert.id} className={`alert-item alert-${alert.level}`}>
+                  <div className="alert-header">
+                    <span className="alert-title">{alert.title}</span>
+                    <span className="alert-time">{alert.time}</span>
+                  </div>
+                  <div className="alert-desc">{alert.desc}</div>
                 </div>
-                <div className="alert-desc">{alert.desc}</div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '24px 0', color: '#999', fontSize: 14 }}>
+              暂无预警通知
+            </div>
+          )}
         </Card>
 
         {/* 今日经营建议 */}
@@ -171,17 +167,23 @@ export default function InsightsPage() {
             <span>📜</span>
             <span>历史建议记录</span>
           </div>
-          <div className="history-list">
-            {HISTORY_ADVICE.map((item, i) => (
-              <div key={i} className="history-item">
-                <div className="history-header">
-                  <span className="history-date">{item.date}</span>
-                  <Tag color="success">+{formatCurrency(item.diff)}</Tag>
+          {HISTORY_ADVICE.length > 0 ? (
+            <div className="history-list">
+              {HISTORY_ADVICE.map((item, i) => (
+                <div key={i} className="history-item">
+                  <div className="history-header">
+                    <span className="history-date">{item.date}</span>
+                    <Tag color="success">+{formatCurrency(item.diff)}</Tag>
+                  </div>
+                  <div className="history-summary">{item.summary}</div>
                 </div>
-                <div className="history-summary">{item.summary}</div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '24px 0', color: '#999', fontSize: 14 }}>
+              暂无历史建议记录
+            </div>
+          )}
         </Card>
       </div>
     </div>

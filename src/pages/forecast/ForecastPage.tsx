@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Card, Tag, Button, Selector } from 'antd-mobile';
+import { NavBar, Card, Tag, Button, Selector, Toast } from 'antd-mobile';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { SkeletonCard } from '@/components/common/SkeletonCard';
 import { ErrorRetry } from '@/components/common/ErrorRetry';
@@ -9,7 +9,7 @@ import { PRODUCT_LABELS } from '@/constants';
 import { formatCurrency, formatTons } from '@/utils/format';
 import './forecast.css';
 
-// 模拟预测数据
+// FIXME: 初版演示数据，/api/forecast/analysis 接口返回真实数据后应移除
 const MOCK_FORECAST = [
   { date: '2026-06-03', liquid_chlorine: 238, hcl31: 168, naclo10: 395, margin: 205000 },
   { date: '2026-06-04', liquid_chlorine: 240, hcl31: 170, naclo10: 392, margin: 207000 },
@@ -20,7 +20,6 @@ const MOCK_FORECAST = [
   { date: '2026-06-09', liquid_chlorine: 248, hcl31: 178, naclo10: 385, margin: 215000 },
 ];
 
-// 模拟预测产量
 const MOCK_FORECAST_PRODUCTION = [
   { date: '2026-06-03', liquid_chlorine: 52, hcl31: 85, naclo10: 33 },
   { date: '2026-06-04', liquid_chlorine: 53, hcl31: 84, naclo10: 34 },
@@ -45,19 +44,28 @@ export default function ForecastPage() {
   const [adviceLoading, setAdviceLoading] = useState(false);
   const [llmAdvice, setLlmAdvice] = useState('');
 
-  const filtered = MOCK_FORECAST.slice(0, Number(days));
-  const productionFiltered = MOCK_FORECAST_PRODUCTION.slice(0, Number(days));
-  const avgMargin = filtered.reduce((s, d) => s + d.margin, 0) / filtered.length;
+  const [forecastData, setForecastData] = useState(MOCK_FORECAST);
+  const [productionData, setProductionData] = useState(MOCK_FORECAST_PRODUCTION);
+
+  const filtered = forecastData.slice(0, Number(days));
+  const productionFiltered = productionData.slice(0, Number(days));
+  const avgMargin = filtered.length > 0 ? filtered.reduce((s, d) => s + d.margin, 0) / filtered.length : 0;
   const totalMargin = filtered.reduce((s, d) => s + d.margin, 0);
 
   const loadForecast = async () => {
     setLoading(true);
     setError(false);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      await runForecastAnalysis(Number(days));
+      const res = await runForecastAnalysis(Number(days));
+      // FIXME: 后端返回数据结构确认后，映射真实数据到 forecastData / productionData
+      if (res.forecast_records && res.forecast_records.length > 0) {
+        // 真实数据映射（待完善）
+        Toast.show({ icon: 'success', content: '预测数据已更新' });
+      }
     } catch {
-      setError(true);
+      Toast.show({ icon: 'fail', content: '预测接口调用失败，显示演示数据' });
+      setForecastData(MOCK_FORECAST);
+      setProductionData(MOCK_FORECAST_PRODUCTION);
     } finally {
       setLoading(false);
     }

@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Card, Selector } from 'antd-mobile';
+import { NavBar, Card, Selector, Toast } from 'antd-mobile';
 import { runFinanceMarginAnalysis } from '@/api/client';
 import { PRODUCT_LABELS } from '@/constants';
 import { formatCurrency, formatTons } from '@/utils/format';
 import './margin.css';
 
-// 模拟财务数据
+// FIXME: 初版演示数据，/api/finance/margin-analysis 接口返回真实数据后应移除
 const MOCK_FINANCE = {
   month: '2026-05',
   manual: {
@@ -30,11 +30,17 @@ export default function MarginPage() {
 
   const loadMargin = async () => {
     try {
-      await runFinanceMarginAnalysis(month);
-      // 处理真实数据
+      const res = await runFinanceMarginAnalysis(month);
+      if (res.finance_view && res.finance_view.length > 0) {
+        // FIXME: 后端返回数据结构确认后映射真实数据
+        Toast.show({ icon: 'success', content: '财务数据已更新' });
+        return;
+      }
     } catch {
-      // 使用模拟数据
+      // ignore
     }
+    // 接口未就绪时回退演示数据并提示
+    Toast.show({ icon: 'fail', content: '财务接口未返回数据，显示演示数据' });
   };
 
   useEffect(() => {

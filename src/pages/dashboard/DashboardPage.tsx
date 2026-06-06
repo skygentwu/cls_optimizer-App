@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { NavBar, Card, Tag, Toast, PullToRefresh, Grid } from 'antd-mobile';
 import {
   HistogramOutline,
@@ -25,65 +25,76 @@ import { ErrorRetry } from '@/components/common/ErrorRetry';
 
 import './dashboard.css';
 
+const PIE_COLORS = ['#1677ff', '#52c41a', '#faad14', '#f5222d'];
+
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const store = useAppStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const dashboardRef = useRef<HTMLDivElement>(null);
 
-  const handleExport = async () => {
+  const rec = useAppStore((s) => s.recommendation);
+  const manual = useAppStore((s) => s.manualResult);
+
+  const handleExport = useCallback(async () => {
     if (!dashboardRef.current) return;
+    Toast.show({ icon: 'loading', content: '正在生成图片...', duration: 0 });
     try {
-      Toast.show({ icon: 'loading', content: '正在生成图片...', duration: 0 });
       const { default: html2canvas } = await import('html2canvas');
       const canvas = await html2canvas(dashboardRef.current, { scale: 2, backgroundColor: '#f5f5f5' });
       const link = document.createElement('a');
       link.download = `CLS_Optimizer_${new Date().toISOString().slice(0, 10)}.png`;
       link.href = canvas.toDataURL('image/png');
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       Toast.clear();
       Toast.show({ icon: 'success', content: '图片已保存' });
     } catch {
       Toast.clear();
       Toast.show({ icon: 'fail', content: '导出失败' });
     }
-  };
-
-  useEffect(() => {
-    loadDashboardData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const loadDashboardData = async () => {
+  const abortRef = useRef<AbortController | null>(null);
+
+  const loadDashboardData = useCallback(async () => {
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+
     setLoading(true);
     setError(false);
-    store.setGlobalLoading(true);
+    useAppStore.getState().setGlobalLoading(true);
     try {
       const [modes, priceRes] = await Promise.all([
         fetchDecisionModes(),
         fetchPrices(1),
       ]);
+      if (ctrl.signal.aborted) return;
 
-      store.setModes(modes);
+      const state = useAppStore.getState();
+      state.setModes(modes);
       const defaultMode = modes.find((m) => m.enabled) || modes[0];
-      if (defaultMode) store.setDecisionName(defaultMode.name);
+      if (defaultMode) state.setDecisionName(defaultMode.name);
 
-      const prices = priceRes.records.length > 0 ? priceRes.records[0].prices : store.prices;
-      store.setPrices(prices);
+      const prices = priceRes.records.length > 0 ? priceRes.records[0].prices : state.prices;
+      state.setPrices(prices);
 
-      const rec = await recommendDecision(defaultMode?.name ?? '利润最大化（默认）', store.naohDaily || DEFAULT_NAOH_DAILY, prices);
-      store.setRecommendation(rec);
+      const rec = await recommendDecision(defaultMode?.name ?? '利润最大化（默认）', state.naohDaily || DEFAULT_NAOH_DAILY, prices);
+      if (ctrl.signal.aborted) return;
+      state.setRecommendation(rec);
 
       try {
         const manualRes = await evaluateManualPlan(
-          store.naohDaily || DEFAULT_NAOH_DAILY,
+          state.naohDaily || DEFAULT_NAOH_DAILY,
           prices,
           rec.products ?? { liquid_chlorine: 0, hcl31: 0, naclo10: 0 },
           rec.products,
           rec.total_margin
         );
-        store.setManualResult({
+        if (ctrl.signal.aborted) return;
+        state.setManualResult({
           totalMargin: manualRes.total_margin,
           cl2Diff: manualRes.cl2_diff,
           isBalanced: manualRes.is_cl2_balanced,
@@ -93,37 +104,43 @@ export default function DashboardPage() {
         // ignore
       }
     } catch {
+      if (ctrl.signal.aborted) return;
       setError(true);
       Toast.show({ icon: 'fail', content: '数据加载失败' });
     } finally {
-      setLoading(false);
-      store.setGlobalLoading(false);
+      if (!ctrl.signal.aborted) {
+        setLoading(false);
+        useAppStore.getState().setGlobalLoading(false);
+      }
     }
-  };
+  }, []);
 
-  const rec = store.recommendation;
-  const manual = store.manualResult;
+  useEffect(() => {
+    loadDashboardData();
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, [loadDashboardData]);
+
   const diff = manual ? manual.totalMargin - (rec?.total_margin ?? 0) : 0;
 
-  // 边际贡献对比图表数据
-  const marginCompareData = [
+  const marginCompareData = useMemo(() => [
     { name: '系统推荐', value: rec?.total_margin ?? 0, fill: '#1677ff' },
     { name: '人工方案', value: manual?.totalMargin ?? 0, fill: '#999' },
-  ];
+  ], [rec?.total_margin, manual?.totalMargin]);
 
-  // 产品产量饼图数据
-  const productPieData = rec?.products
-    ? Object.entries(rec.products)
-        .filter(([, v]) => (v as number) > 0)
-        .map(([key, value]) => ({
-          name: PRODUCT_LABELS[key as keyof typeof PRODUCT_LABELS] || key,
-          value: Math.round(value as number),
-        }))
-    : [];
+  const productPieData = useMemo(() =>
+    rec?.products
+      ? Object.entries(rec.products)
+          .filter(([, v]) => (v as number) > 0)
+          .map(([key, value]) => ({
+            name: PRODUCT_LABELS[key as keyof typeof PRODUCT_LABELS] || key,
+            value: Math.round(value as number),
+          }))
+      : []
+  , [rec?.products]);
 
-  const PIE_COLORS = ['#1677ff', '#52c41a', '#faad14', '#f5222d'];
-
-  const quickCards = [
+  const quickCards = useMemo(() => [
     { title: '决策对比', icon: <HistogramOutline />, color: '#1677ff', path: '/compare' },
     { title: '趋势分析', icon: <EyeOutline />, color: '#52c41a', path: '/trends' },
     { title: '经营建议', icon: <AudioOutline />, color: '#faad14', path: '/insights' },
@@ -132,7 +149,7 @@ export default function DashboardPage() {
     { title: '财务分析', icon: <PayCircleOutline />, color: '#13c2c2', path: '/margin' },
     { title: '经营报告', icon: <FileOutline />, color: '#f5222d', path: '/report' },
     { title: '参数配置', icon: <SetOutline />, color: '#666', path: '/profile' },
-  ];
+  ], []);
 
   return (
     <div className="dashboard-page">

@@ -24,6 +24,21 @@ import type {
   ConstraintParams,
   BacktestRangeResponse,
   BacktestAnalysisResponse,
+  PriceForecastVersionReviewResponse,
+  PriceMarketAnalysisResponse,
+  PriceMarketPromptTemplateResponse,
+  AdvisorReportResponse,
+  AdvisorWordExportResponse,
+  AdvisorFeedbackResponse,
+  AdvisorFeedbackTableResponse,
+  AdvisorFeedbackSummaryResponse,
+  AdvisorFeedbackMonthlySummaryResponse,
+  ConstraintConfigResponse,
+  ConstraintUpdateResponse,
+  ConstraintSourceValidateResponse,
+  ConstraintSourceUploadResponse,
+  ApcWorkOrderResponse,
+  ApcSendResponse,
 } from "@/types";
 
 const getApiBase = () => useAppStore.getState().apiBaseUrl || import.meta.env.VITE_API_BASE_URL || "";
@@ -50,19 +65,24 @@ export class ApiError extends Error {
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = useAuthStore.getState().token;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
   const response = await fetch(buildApiUrl(path), {
     ...options,
+    signal: controller.signal,
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers ?? {}),
     },
   });
+  clearTimeout(timer);
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     if (response.status === 401 && !path.includes('/auth/login')) {
       useAuthStore.getState().clearAuth();
-      window.location.reload();
+      window.location.hash = '#/login';
+      return Promise.reject(new ApiError(response.status, '登录已过期'));
     }
     throw new ApiError(response.status, body.detail ?? response.statusText);
   }
@@ -84,6 +104,13 @@ export function logout() {
 
 export function fetchCurrentUser() {
   return request<CurrentUserResponse>("/api/auth/me");
+}
+
+export function updateCurrentUser(payload: { display_name?: string; password?: string }) {
+  return request<CurrentUserResponse>("/api/auth/me/update", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 // ==================== 价格数据 ====================
@@ -140,10 +167,101 @@ export function bulkUpdatePriceRecords(
   });
 }
 
-export function generatePriceForecast(days: number, syncExcel = true) {
+export function generatePriceForecast(
+  days: number,
+  syncExcel = true,
+  common: Record<string, unknown> = {},
+  rules: Record<string, unknown> = {}
+) {
   return request<PriceForecastGenerateResponse>("/api/prices/forecast", {
     method: "POST",
-    body: JSON.stringify({ days, sync_excel: syncExcel }),
+    body: JSON.stringify({ days, sync_excel: syncExcel, common, rules }),
+  });
+}
+
+export function reviewPriceForecastVersion(
+  forecastId: string,
+  status: string,
+  note?: string,
+  approvalLevel?: string,
+  approver?: string,
+  reviewMeetingRecord?: string
+) {
+  return request<PriceForecastVersionReviewResponse>(`/api/prices/forecast-versions/${forecastId}/status`, {
+    method: "PUT",
+    body: JSON.stringify({
+      status,
+      note: note ?? null,
+      approval_level: approvalLevel ?? null,
+      approver: approver ?? null,
+      review_meeting_record: reviewMeetingRecord ?? null,
+    }),
+  });
+}
+
+export function analyzePriceMarketContext(promptTemplate?: string) {
+  return request<PriceMarketAnalysisResponse>("/api/prices/market-analysis", {
+    method: "POST",
+    body: JSON.stringify({ prompt_template: promptTemplate ?? null }),
+  });
+}
+
+export function fetchMarketPromptTemplate() {
+  return request<PriceMarketPromptTemplateResponse>("/api/prices/market-prompt-template");
+}
+
+export function saveMarketPromptTemplate(template: string) {
+  return request<PriceMarketPromptTemplateResponse>("/api/prices/market-prompt-template", {
+    method: "POST",
+    body: JSON.stringify({ template }),
+  });
+}
+
+export function resetMarketPromptTemplate() {
+  return request<PriceMarketPromptTemplateResponse>("/api/prices/market-prompt-template/reset", {
+    method: "POST",
+  });
+}
+
+// ==================== 参数设定 ====================
+
+export function fetchConstraintConfig() {
+  return request<ConstraintConfigResponse>("/api/config/constraints");
+}
+
+export function previewConstraintUpdate(params: {
+  content: string;
+  filename?: string;
+  actor?: string;
+}) {
+  return request<ConstraintUpdateResponse>("/api/config/constraints/preview-update", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}
+
+export function commitConstraintUpdate(params: {
+  content: string;
+  filename?: string;
+  actor?: string;
+}) {
+  return request<ConstraintUpdateResponse>("/api/config/constraints/commit-update", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}
+
+export function validateConstraintSource(content: string) {
+  return request<ConstraintSourceValidateResponse>("/api/config/constraints/validate-source", {
+    method: "POST",
+    body: JSON.stringify({ content }),
+  });
+}
+
+export function uploadConstraintSource(content: string, filename?: string) {
+  return request<ConstraintSourceUploadResponse>("/api/config/constraints/upload-source", {
+    method: "POST",
+    body: JSON.stringify({ content, filename: filename ?? null }),
   });
 }
 
@@ -304,6 +422,125 @@ export function generateForecastLlmAdvice(
       use_llm: useLlm,
       provider: provider ?? null,
     }),
+  });
+}
+
+// ==================== 经营建议/报告 ====================
+
+export function generateAdvisorReport(payload: {
+  messages?: { role: string; content: string }[];
+  decision_name?: string;
+  opt_products?: ProductPayload | null;
+  opt_total_margin?: number | null;
+  use_llm?: boolean;
+  provider?: string;
+}) {
+  return request<AdvisorReportResponse>("/api/advisor/report", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function exportAdvisorWord(payload: {
+  messages?: { role: string; content: string }[];
+  decision_name?: string;
+  opt_products?: ProductPayload | null;
+  opt_total_margin?: number | null;
+  use_llm?: boolean;
+  provider?: string;
+}) {
+  return request<AdvisorWordExportResponse>("/api/advisor/export-word", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function saveAdvisorFeedback(payload: {
+  session_id?: string;
+  report?: string;
+  rating?: number;
+  comment?: string;
+  adopted?: boolean;
+  meeting_minutes?: string;
+  responsible_department?: string;
+  execution_result?: string;
+  benefit_deviation?: string;
+  parameter_adjustment_suggestion?: string;
+  attachment_refs?: string[];
+  approval_level?: string;
+  approver?: string;
+  approval_status?: string;
+  report_type?: string;
+}) {
+  return request<AdvisorFeedbackResponse>("/api/advisor/feedback", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function fetchAdvisorFeedback(limit = 50) {
+  return request<AdvisorFeedbackTableResponse>(`/api/advisor/feedback?limit=${limit}`);
+}
+
+export function fetchAdvisorFeedbackSummary(limit = 50) {
+  return request<AdvisorFeedbackSummaryResponse>(`/api/advisor/feedback/summary?limit=${limit}`);
+}
+
+export function fetchAdvisorFeedbackMonthlySummary(limit = 50, months = 6) {
+  return request<AdvisorFeedbackMonthlySummaryResponse>(`/api/advisor/feedback/monthly-summary?limit=${limit}&months=${months}`);
+}
+
+// ==================== APC 工单 ====================
+
+export function previewApcWorkOrder(payload: {
+  products: ProductPayload;
+  prices: PricePayload;
+  naoh_daily: number;
+  total_margin: number;
+  solver_status: string;
+  decision_mode: string;
+  instruction_source: string;
+  params?: ConstraintParams | null;
+  plant_code: string;
+  unit_code: string;
+  plan_date?: string;
+  remark: string;
+  manual_adjustment_reason: string;
+  endpoint: string;
+  api_token?: string;
+  timeout: number;
+  dry_run: boolean;
+  receipt_field_aliases?: Record<string, string[] | string>;
+}) {
+  return request<ApcWorkOrderResponse>("/api/apc/work-orders/preview", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function sendApcWorkOrder(payload: {
+  products: ProductPayload;
+  prices: PricePayload;
+  naoh_daily: number;
+  total_margin: number;
+  solver_status: string;
+  decision_mode: string;
+  instruction_source: string;
+  params?: ConstraintParams | null;
+  plant_code: string;
+  unit_code: string;
+  plan_date?: string;
+  remark: string;
+  manual_adjustment_reason: string;
+  endpoint: string;
+  api_token?: string;
+  timeout: number;
+  dry_run: boolean;
+  receipt_field_aliases?: Record<string, string[] | string>;
+}) {
+  return request<ApcSendResponse>("/api/apc/work-orders/send", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }
 

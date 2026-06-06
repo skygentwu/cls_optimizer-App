@@ -60,10 +60,9 @@ export default function ReportPage() {
   const handleRetry = () => {
     setError(false);
     setLoading(true);
-    const timer = setTimeout(() => {
+    setTimeout(() => {
       setLoading(false);
     }, 500);
-    return () => clearTimeout(timer);
   };
 
   const generateReport = async () => {
@@ -157,8 +156,23 @@ export default function ReportPage() {
               })}
             </div>
             <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-              <Button block fill="outline">下载 Word</Button>
-              <Button block fill="outline">复制内容</Button>
+              <Button block fill="outline" onClick={() => { Toast.show({ icon: 'fail', content: 'Word 导出功能开发中' }); }}>
+                下载 Word
+              </Button>
+              <Button
+                block
+                fill="outline"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(report);
+                    Toast.show({ icon: 'success', content: '已复制到剪贴板' });
+                  } catch {
+                    Toast.show({ icon: 'fail', content: '复制失败' });
+                  }
+                }}
+              >
+                复制内容
+              </Button>
             </div>
           </Card>
         )}

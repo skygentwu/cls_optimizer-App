@@ -17,7 +17,7 @@ export default function PricesPage() {
     setLoading(true);
     try {
       const res = await fetchPrices(30);
-      setRecords(res.records.reverse());
+      setRecords([...res.records].reverse());
     } catch {
       Toast.show({ icon: 'fail', content: '加载价格数据失败' });
     } finally {
@@ -93,13 +93,16 @@ export default function PricesPage() {
           <div className="price-editor-body">
             {Object.entries(editPrices).map(([key, value]) => (
               <div key={key} className="price-editor-row">
-                <label>{PRODUCT_LABELS[key as keyof typeof PRODUCT_LABELS]}</label>
+                <label htmlFor={`price-${key}`}>{PRODUCT_LABELS[key as keyof typeof PRODUCT_LABELS]}</label>
                 <Input
+                  id={`price-${key}`}
+                  name={`price-${key}`}
                   type="number"
                   value={String(value)}
-                  onChange={(val) =>
-                    setEditPrices((prev) => ({ ...prev, [key]: Number(val) || 0 }))
-                  }
+                  onChange={(val) => {
+                    const num = val === '' ? 0 : Number(val);
+                    setEditPrices((prev) => ({ ...prev, [key]: Number.isNaN(num) ? prev[key as keyof PricePayload] : num }));
+                  }}
                 />
               </div>
             ))}

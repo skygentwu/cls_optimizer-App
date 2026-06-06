@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import LoginPage from '@/pages/login/LoginPage';
 import AppShell from '@/components/AppShell';
@@ -17,10 +17,10 @@ const ReportPage = lazy(() => import('@/pages/report/ReportPage'));
 const ProfilePage = lazy(() => import('@/pages/profile/ProfilePage'));
 
 function App() {
-  const { isLoggedIn } = useAuthStore();
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route
           path="/login"
@@ -51,7 +51,7 @@ function App() {
           }
         />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
