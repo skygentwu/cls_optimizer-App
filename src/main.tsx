@@ -1,6 +1,7 @@
 import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ConfigProvider } from 'antd-mobile';
+import 'antd-mobile/es/global';
 import zhCN from 'antd-mobile/es/locales/zh-CN';
 import { useAppStore } from '@/stores/appStore';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';

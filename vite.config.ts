@@ -6,6 +6,24 @@ import { resolve } from 'path';
 export default defineConfig({
   base: process.env.VITE_BASE_PATH || '/',
   plugins: [react()],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setupTests.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov'],
+      exclude: [
+        'node_modules/',
+        'src/test/',
+        '**/*.d.ts',
+        '**/*.config.*',
+        'android/',
+        'ios/',
+        'dist/',
+      ],
+    },
+  },
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),

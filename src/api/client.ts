@@ -43,7 +43,7 @@ import type {
 
 const getApiBase = () => useAppStore.getState().apiBaseUrl || import.meta.env.VITE_API_BASE_URL || "";
 
-function buildApiUrl(path: string): string {
+export function buildApiUrl(path: string): string {
   const base = String(getApiBase()).replace(/\/+$/, "");
   if (!base) {
     return path;
@@ -67,26 +67,29 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = useAuthStore.getState().token;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 15000);
-  const response = await fetch(buildApiUrl(path), {
-    ...options,
-    signal: controller.signal,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers ?? {}),
-    },
-  });
-  clearTimeout(timer);
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    if (response.status === 401 && !path.includes('/auth/login')) {
-      useAuthStore.getState().clearAuth();
-      window.location.hash = '#/login';
-      return Promise.reject(new ApiError(response.status, '登录已过期'));
+  try {
+    const response = await fetch(buildApiUrl(path), {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(options.headers ?? {}),
+      },
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      if (response.status === 401 && !path.includes('/auth/login')) {
+        useAuthStore.getState().clearAuth();
+        window.location.hash = '#/login';
+        return Promise.reject(new ApiError(response.status, '登录已过期'));
+      }
+      throw new ApiError(response.status, body.detail ?? response.statusText);
     }
-    throw new ApiError(response.status, body.detail ?? response.statusText);
+    return response.json() as Promise<T>;
+  } finally {
+    clearTimeout(timer);
   }
-  return response.json() as Promise<T>;
 }
 
 // ==================== 认证 ====================
