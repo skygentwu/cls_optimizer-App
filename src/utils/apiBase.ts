@@ -6,7 +6,7 @@
  * 并对非内网/明文地址给出提醒，降低令牌外泄面。
  */
 
-/** 校验后端地址是否可接受。空串表示“自动”（走代理/默认），视为合法。 */
+/** 校验后端地址是否可接受。空串表示”自动”（走代理/默认），视为合法。 */
 export function isValidApiBase(url: string): boolean {
   const value = url.trim();
   if (!value) return true; // 自动
@@ -33,6 +33,23 @@ export function isTrustedDevHost(url: string): boolean {
       hostname.startsWith('10.') ||
       hostname.startsWith('172.')
     );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 测试后端连接是否可达。
+ * 通过 /healthz 端点探测，3 秒超时。
+ */
+export async function testConnection(baseUrl: string): Promise<boolean> {
+  try {
+    const url = baseUrl ? `${baseUrl.replace(/\/$/, '')}/healthz` : '/healthz';
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 3000);
+    const res = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(timer);
+    return res.ok;
   } catch {
     return false;
   }

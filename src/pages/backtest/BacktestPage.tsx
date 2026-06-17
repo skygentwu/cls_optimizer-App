@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Card, Tag, Selector, Toast } from 'antd-mobile';
+import { NavBar, Card, Tag, Selector } from 'antd-mobile';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { ChartBox } from '@/components/common/ChartBox';
 import { SkeletonCard } from '@/components/common/SkeletonCard';
 import { ErrorRetry } from '@/components/common/ErrorRetry';
-import { fetchBacktestRange, runBacktestAnalysis } from '@/api/client';
+import { runBacktestAnalysis } from '@/api/client';
 import { formatCurrency } from '@/utils/format';
 import { toNum, pick } from '@/utils/record';
 import { useAbortableAsync } from '@/hooks/useAbortableAsync';
@@ -39,20 +39,6 @@ function mapDetailToRow(r: Record<string, unknown>): BacktestRow {
   };
 }
 
-// FIXME: 初版演示数据，后端 /api/backtest/analysis 接口就绪后应完全移除
-const MOCK_BACKTEST: BacktestRow[] = [
-  { date: '2026-05-01', manual: 182000, system: 195000, diff: 13000, products: { liquid_chlorine: 45, hcl31: 82, naclo10: 28 } },
-  { date: '2026-05-02', manual: 185000, system: 198000, diff: 13000, products: { liquid_chlorine: 48, hcl31: 80, naclo10: 30 } },
-  { date: '2026-05-03', manual: 183000, system: 197000, diff: 14000, products: { liquid_chlorine: 46, hcl31: 81, naclo10: 29 } },
-  { date: '2026-05-04', manual: 188000, system: 202000, diff: 14000, products: { liquid_chlorine: 50, hcl31: 83, naclo10: 31 } },
-  { date: '2026-05-05', manual: 186000, system: 200000, diff: 14000, products: { liquid_chlorine: 49, hcl31: 82, naclo10: 30 } },
-  { date: '2026-05-06', manual: 190000, system: 204000, diff: 14000, products: { liquid_chlorine: 51, hcl31: 84, naclo10: 32 } },
-  { date: '2026-05-07', manual: 187000, system: 201000, diff: 14000, products: { liquid_chlorine: 49, hcl31: 83, naclo10: 30 } },
-  { date: '2026-05-08', manual: 184000, system: 199000, diff: 15000, products: { liquid_chlorine: 47, hcl31: 81, naclo10: 29 } },
-  { date: '2026-05-09', manual: 189000, system: 203000, diff: 14000, products: { liquid_chlorine: 50, hcl31: 83, naclo10: 31 } },
-  { date: '2026-05-10', manual: 191000, system: 205000, diff: 14000, products: { liquid_chlorine: 52, hcl31: 84, naclo10: 32 } },
-];
-
 export default function BacktestPage() {
   const navigate = useNavigate();
   const [range, setRange] = useState<'7' | '14' | '30'>('14');
@@ -70,19 +56,12 @@ export default function BacktestPage() {
     : '0';
 
   const { loading, error, run } = useAbortableAsync(async (signal) => {
-    await fetchBacktestRange();
     const analysis = await runBacktestAnalysis();
     // 被新请求取代则丢弃，避免旧响应覆盖
     if (signal.aborted) return;
-    // 后端 detail_records 为中文键，用 mapDetailToRow 安全转换；空数组回退演示数据
+    // 后端 detail_records 为中文键，用 mapDetailToRow 安全转换
     const records: BacktestRow[] = (analysis.detail_records || []).map(mapDetailToRow).filter((r) => r.date);
-    if (records.length > 0) {
-      setData(records);
-    } else {
-      // 接口未返回数据时回退到演示数据并提示
-      Toast.show({ icon: 'fail', content: '暂无真实回测数据，显示演示数据' });
-      setData(MOCK_BACKTEST);
-    }
+    setData(records);
   }, []);
 
   if (loading) {

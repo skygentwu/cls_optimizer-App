@@ -7,26 +7,35 @@ import { formatCurrency, formatTons } from '@/utils/format';
 import './recommendation.css';
 
 export default function RecommendationPage() {
-  const store = useAppStore();
+  const naohDaily = useAppStore((s) => s.naohDaily);
+  const prices = useAppStore((s) => s.prices);
+  const decisionName = useAppStore((s) => s.decisionName);
+  const modes = useAppStore((s) => s.modes);
+  const recommendation = useAppStore((s) => s.recommendation);
+  const setNaohDaily = useAppStore((s) => s.setNaohDaily);
+  const setPrices = useAppStore((s) => s.setPrices);
+  const setDecisionName = useAppStore((s) => s.setDecisionName);
+  const setRecommendation = useAppStore((s) => s.setRecommendation);
+
   const [loading, setLoading] = useState(false);
   const [showModePicker, setShowModePicker] = useState(false);
-  const [localNaoh, setLocalNaoh] = useState(store.naohDaily || DEFAULT_NAOH_DAILY);
-  const [localPrices, setLocalPrices] = useState({ ...store.prices });
+  const [localNaoh, setLocalNaoh] = useState(naohDaily || DEFAULT_NAOH_DAILY);
+  const [localPrices, setLocalPrices] = useState({ ...prices });
 
-  const modeColumns = store.modes
+  const modeColumns = modes
     .filter((m) => m.enabled)
     .map((m) => ({ label: m.name, value: m.name }));
 
   const handleCalculate = async () => {
     setLoading(true);
     try {
-      store.setNaohDaily(localNaoh);
-      store.setPrices(localPrices);
+      setNaohDaily(localNaoh);
+      setPrices(localPrices);
 
-      await runOptimization(localNaoh, localPrices, store.decisionName);
-      const recRes = await recommendDecision(store.decisionName, localNaoh, localPrices);
+      await runOptimization(localNaoh, localPrices, decisionName);
+      const recRes = await recommendDecision(decisionName, localNaoh, localPrices);
 
-      store.setRecommendation(recRes);
+      setRecommendation(recRes);
       Toast.show({ icon: 'success', content: '计算完成' });
     } catch {
       Toast.show({ icon: 'fail', content: '计算失败，请检查参数' });
@@ -35,7 +44,7 @@ export default function RecommendationPage() {
     }
   };
 
-  const rec = store.recommendation;
+  const rec = recommendation;
 
   return (
     <div className="recommendation-page">
@@ -65,7 +74,7 @@ export default function RecommendationPage() {
           <div className="form-group">
             <label className="form-label">决策模式</label>
             <div className="picker-trigger" onClick={() => setShowModePicker(true)}>
-              {store.decisionName}
+              {decisionName}
               <span style={{ color: '#999' }}>▼</span>
             </div>
           </div>
@@ -161,9 +170,9 @@ export default function RecommendationPage() {
           <div style={{ textAlign: 'center', fontWeight: 600, marginBottom: 16 }}>选择决策模式</div>
           <PickerView
             columns={[modeColumns]}
-            value={[store.decisionName]}
+            value={[decisionName]}
             onChange={(val) => {
-              if (val[0]) store.setDecisionName(String(val[0]));
+              if (val[0]) setDecisionName(String(val[0]));
             }}
           />
           <Button color="primary" block onClick={() => setShowModePicker(false)} style={{ marginTop: 16 }}>

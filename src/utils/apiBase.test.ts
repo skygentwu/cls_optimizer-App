@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { isValidApiBase, isTrustedDevHost } from './apiBase';
+import { describe, it, expect, vi } from 'vitest';
+import { isValidApiBase, isTrustedDevHost, testConnection } from './apiBase';
 
 describe('isValidApiBase', () => {
   it('空串视为合法（自动模式）', () => {
@@ -36,5 +36,32 @@ describe('isTrustedDevHost', () => {
   it('外网明文地址不受信', () => {
     expect(isTrustedDevHost('http://evil.example.com')).toBe(false);
     expect(isTrustedDevHost('http://8.8.8.8')).toBe(false);
+  });
+});
+
+describe('testConnection', () => {
+  it('成功连接返回 true', async () => {
+    global.fetch = vi.fn().mockResolvedValue({ ok: true } as Response);
+    const result = await testConnection('http://localhost:8080');
+    expect(result).toBe(true);
+    expect(fetch).toHaveBeenCalledWith('http://localhost:8080/healthz', expect.any(Object));
+  });
+
+  it('连接失败返回 false', async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
+    const result = await testConnection('http://localhost:8080');
+    expect(result).toBe(false);
+  });
+
+  it('空地址使用相对路径 /healthz', async () => {
+    global.fetch = vi.fn().mockResolvedValue({ ok: true } as Response);
+    await testConnection('');
+    expect(fetch).toHaveBeenCalledWith('/healthz', expect.any(Object));
+  });
+
+  it('去除末尾斜杠', async () => {
+    global.fetch = vi.fn().mockResolvedValue({ ok: true } as Response);
+    await testConnection('http://localhost:8080/');
+    expect(fetch).toHaveBeenCalledWith('http://localhost:8080/healthz', expect.any(Object));
   });
 });

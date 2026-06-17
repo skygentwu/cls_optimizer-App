@@ -4,7 +4,7 @@ import { SetOutline } from 'antd-mobile-icons';
 import { login, ApiError } from '@/api/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useAppStore } from '@/stores/appStore';
-import { isValidApiBase, isTrustedDevHost } from '@/utils/apiBase';
+import { isValidApiBase, isTrustedDevHost, testConnection } from '@/utils/apiBase';
 import './login.css';
 
 // 后端地址快捷预设（开发环境 Java 后端默认监听 8080）
@@ -13,20 +13,6 @@ const API_PRESETS = [
   { label: '本机 8080', value: 'http://localhost:8080', desc: '本机直连 Java 后端' },
   { label: '模拟器 8080', value: 'http://10.0.2.2:8080', desc: 'Android 模拟器访问宿主机' },
 ];
-
-// 通过 /healthz 探测后端是否可达
-async function testConnection(baseUrl: string): Promise<boolean> {
-  try {
-    const url = baseUrl ? `${baseUrl.replace(/\/$/, '')}/healthz` : '/healthz';
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 3000);
-    const res = await fetch(url, { signal: ctrl.signal });
-    clearTimeout(timer);
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');

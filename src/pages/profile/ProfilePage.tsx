@@ -14,7 +14,7 @@ import {
 import { useAuthStore } from '@/stores/authStore';
 import { useAppStore } from '@/stores/appStore';
 import { logout } from '@/api/client';
-import { isValidApiBase, isTrustedDevHost } from '@/utils/apiBase';
+import { isValidApiBase, isTrustedDevHost, testConnection } from '@/utils/apiBase';
 import { useNavigate } from 'react-router-dom';
 import './profile.css';
 
@@ -24,19 +24,6 @@ const PRESETS = [
   { label: '本机', value: 'localhost', desc: 'http://localhost:8080' },
   { label: '自定义', value: 'custom', desc: '手动输入地址' },
 ];
-
-async function testConnection(baseUrl: string): Promise<boolean> {
-  try {
-    const url = baseUrl ? `${baseUrl.replace(/\/$/, '')}/healthz` : '/healthz';
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 3000);
-    const res = await fetch(url, { signal: ctrl.signal });
-    clearTimeout(timer);
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
 
 function getPresetFromUrl(url: string): string {
   if (!url) return 'auto';
