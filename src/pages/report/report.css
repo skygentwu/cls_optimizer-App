@@ -3,10 +3,6 @@
   min-height: 100vh;
 }
 
-.page-content {
-  padding-bottom: 12px;
-}
-
 /* 报告内容 */
 .report-content {
   font-size: 14px;
@@ -82,15 +78,4 @@
   gap: 12px;
   font-size: 12px;
   color: #999;
-}
-
-/* 通用 */
-.card-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }

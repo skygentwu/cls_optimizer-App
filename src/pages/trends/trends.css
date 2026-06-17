@@ -3,10 +3,6 @@
   min-height: 100vh;
 }
 
-.page-content {
-  padding-bottom: 12px;
-}
-
 /* 图表容器 */
 .chart-container {
   display: flex;
@@ -145,15 +141,4 @@
   color: #1677ff;
   width: 80px;
   text-align: right;
-}
-
-/* 通用 */
-.card-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }

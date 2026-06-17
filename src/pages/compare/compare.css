@@ -3,44 +3,6 @@
   min-height: 100vh;
 }
 
-.page-content {
-  padding-bottom: 12px;
-}
-
-/* Hero */
-.hero-card {
-  background: linear-gradient(135deg, #1677ff 0%, #36cfc9 100%);
-  color: #fff;
-  text-align: center;
-}
-
-.hero-label {
-  font-size: 14px;
-  opacity: 0.9;
-  margin-bottom: 8px;
-}
-
-.hero-diff {
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-
-.diff-positive {
-  color: #52c41a;
-  font-weight: 600;
-}
-
-.diff-negative {
-  color: #f5222d;
-  font-weight: 600;
-}
-
-.hero-sub {
-  font-size: 13px;
-  opacity: 0.85;
-}
-
 /* 对比表格 */
 .compare-table {
   display: flex;
@@ -130,31 +92,8 @@
   font-weight: 600;
 }
 
-/* 通用 */
-.card-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.metric-label {
-  font-size: 12px;
-  color: #999;
-  margin-bottom: 8px;
-}
-
+/* 通用 - 保留 metric-value 覆盖样式 */
 .metric-value {
   font-size: 20px;
   font-weight: 700;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 24px;
-  color: #999;
-  font-size: 14px;
 }

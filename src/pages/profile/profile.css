@@ -3,10 +3,6 @@
   min-height: 100vh;
 }
 
-.page-content {
-  padding-bottom: 12px;
-}
-
 /* 用户卡片 */
 .user-card {
   display: flex;

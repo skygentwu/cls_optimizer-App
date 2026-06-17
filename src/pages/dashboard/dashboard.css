@@ -8,18 +8,6 @@
 }
 
 /* Hero 大卡片 */
-.hero-card {
-  background: linear-gradient(135deg, #1677ff 0%, #36cfc9 100%);
-  color: #fff;
-  text-align: center;
-}
-
-.hero-label {
-  font-size: 14px;
-  opacity: 0.9;
-  margin-bottom: 8px;
-}
-
 .hero-diff {
   display: flex;
   align-items: baseline;
@@ -32,24 +20,9 @@
   font-weight: 700;
 }
 
-.diff-positive {
-  color: #52c41a;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.diff-negative {
-  color: #ffccc7;
-}
-
 .diff-unit {
   font-size: 14px;
   opacity: 0.8;
-}
-
-.hero-sub {
-  font-size: 13px;
-  opacity: 0.85;
-  margin-top: 4px;
 }
 
 /* 对比行 */
@@ -71,19 +44,6 @@
 }
 
 /* 产品网格 */
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-.product-card {
-  text-align: center;
-  padding: 16px 8px;
-  background: #fafafa;
-  border-radius: 8px;
-}
-
 .product-name {
   font-size: 13px;
   color: #666;
@@ -94,30 +54,4 @@
   font-size: 20px;
   font-weight: 700;
   color: #1677ff;
-}
-
-/* 通用 */
-.card-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 24px;
-  color: #999;
-  font-size: 14px;
-}
-
-.status-optimal {
-  color: #52c41a;
-}
-
-.status-warning {
-  color: #faad14;
 }

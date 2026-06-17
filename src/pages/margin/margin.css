@@ -3,39 +3,6 @@
   min-height: 100vh;
 }
 
-.page-content {
-  padding-bottom: 12px;
-}
-
-/* Hero */
-.hero-card {
-  background: linear-gradient(135deg, #1677ff 0%, #36cfc9 100%);
-  color: #fff;
-  text-align: center;
-}
-
-.hero-label {
-  font-size: 14px;
-  opacity: 0.9;
-  margin-bottom: 8px;
-}
-
-.hero-diff {
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-
-.diff-positive {
-  color: #52c41a;
-  font-weight: 600;
-}
-
-.hero-sub {
-  font-size: 13px;
-  opacity: 0.85;
-}
-
 /* 表格 */
 .margin-table {
   display: flex;
@@ -121,26 +88,4 @@
   color: #52c41a;
   width: 90px;
   text-align: right;
-}
-
-/* 通用 */
-.card-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.metric-label {
-  font-size: 12px;
-  color: #999;
-  margin-bottom: 6px;
-}
-
-.metric-value {
-  font-size: 18px;
-  font-weight: 700;
 }
