@@ -14,13 +14,14 @@ import {
 import { useAuthStore } from '@/stores/authStore';
 import { useAppStore } from '@/stores/appStore';
 import { logout } from '@/api/client';
+import { isValidApiBase, isTrustedDevHost } from '@/utils/apiBase';
 import { useNavigate } from 'react-router-dom';
 import './profile.css';
 
 const PRESETS = [
   { label: '自动判断', value: 'auto', desc: '浏览器走Proxy，模拟器用10.0.2.2' },
-  { label: '模拟器', value: 'emulator', desc: 'http://10.0.2.2:8000' },
-  { label: '本机', value: 'localhost', desc: 'http://localhost:8000' },
+  { label: '模拟器', value: 'emulator', desc: 'http://10.0.2.2:8080' },
+  { label: '本机', value: 'localhost', desc: 'http://localhost:8080' },
   { label: '自定义', value: 'custom', desc: '手动输入地址' },
 ];
 
@@ -46,8 +47,8 @@ function getPresetFromUrl(url: string): string {
 
 function getUrlFromPreset(preset: string): string {
   switch (preset) {
-    case 'emulator': return 'http://10.0.2.2:8000';
-    case 'localhost': return 'http://localhost:8000';
+    case 'emulator': return 'http://10.0.2.2:8080';
+    case 'localhost': return 'http://localhost:8080';
     case 'auto':
     default: return '';
   }
@@ -104,9 +105,18 @@ export default function ProfilePage() {
   };
 
   const handleSaveApiUrl = () => {
-    setApiBaseUrl(tempUrl.trim());
+    const value = tempUrl.trim();
+    if (!isValidApiBase(value)) {
+      Toast.show({ icon: 'fail', content: '地址无效，请输入 http(s):// 开头的完整地址或留空' });
+      return;
+    }
+    if (value && !isTrustedDevHost(value)) {
+      Toast.show({ icon: 'success', content: '已保存（注意：非受信明文地址，令牌可能外泄风险），正在重启应用...' });
+    } else {
+      Toast.show({ icon: 'success', content: '地址已更新，正在重启应用...' });
+    }
+    setApiBaseUrl(value);
     setEditingApi(false);
-    Toast.show({ icon: 'success', content: '地址已更新，正在重启应用...' });
     setTimeout(() => window.location.reload(), 800);
   };
 
@@ -185,7 +195,7 @@ export default function ProfilePage() {
                 <Input
                   id="apiBaseUrl"
                   name="apiBaseUrl"
-                  placeholder="如: http://192.168.1.5:8000"
+                  placeholder="如: http://192.168.1.5:8080"
                   value={tempUrl}
                   onChange={(val) => { setTempUrl(val); setTestOk(null); }}
                   clearable

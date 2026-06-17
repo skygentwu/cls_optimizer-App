@@ -10,7 +10,7 @@ import { DEFAULT_PRICES, DEFAULT_PRODUCTS, DEFAULT_NAOH_DAILY } from '@/constant
  */
 function getDefaultApiBase(): string {
   if (Capacitor.isNativePlatform()) {
-    return 'http://10.0.2.2:8000';
+    return 'http://10.0.2.2:8080';
   }
   return '';
 }
@@ -67,11 +67,12 @@ interface AppState {
   toggleTheme: () => void;
 }
 
-/**
- * useAppStore：全局业务状态管理（Zustand）
- * - apiBaseUrl / theme 从 localStorage 恢复持久化值
- * - 切换主题时同步设置 html 的 data-theme 属性，供 CSS 深色模式选择器使用
- */
+// 模块加载时立即同步 data-theme，防止深色模式用户看到初始白色闪烁（FOUC）
+const _savedTheme = localStorage.getItem('cls_theme');
+if (_savedTheme === 'dark' || _savedTheme === 'light') {
+  document.documentElement.setAttribute('data-theme', _savedTheme);
+}
+
 export const useAppStore = create<AppState>((set) => ({
   // 从 localStorage 或环境变量读取 API 地址；无配置则按平台返回默认值
   apiBaseUrl: localStorage.getItem('cls_api_base') || import.meta.env.VITE_API_BASE_URL || getDefaultApiBase(),

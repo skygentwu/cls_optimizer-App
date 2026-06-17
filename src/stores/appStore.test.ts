@@ -86,4 +86,32 @@ describe('appStore', () => {
     useAppStore.getState().setRecommendation(mockRec);
     expect(useAppStore.getState().recommendation?.total_margin).toBe(5000);
   });
+
+  it('setPrices 更新价格', () => {
+    useAppStore.getState().setPrices({ liquid_chlorine: 300, hcl31: 200, naclo10: 500, naoh32: 700 });
+    expect(useAppStore.getState().prices.liquid_chlorine).toBe(300);
+  });
+
+  it('setDecisionName 更新决策模式名称', () => {
+    useAppStore.getState().setDecisionName('成本最小化');
+    expect(useAppStore.getState().decisionName).toBe('成本最小化');
+  });
+
+  it('setModes 更新决策模式列表', () => {
+    const modes = [{ name: 'mode1', label: '模式1', description: '', mode: 'profit_max', scenario: 'default', enabled: true }];
+    useAppStore.getState().setModes(modes);
+    expect(useAppStore.getState().modes).toEqual(modes);
+  });
+
+  it('setManualProducts 更新手动模拟产量', () => {
+    useAppStore.getState().setManualProducts({ liquid_chlorine: 10, hcl31: 20, naclo10: 30 });
+    expect(useAppStore.getState().manualProducts).toEqual({ liquid_chlorine: 10, hcl31: 20, naclo10: 30 });
+  });
+
+  it('setManualResult 更新手动模拟结果', () => {
+    const result = { totalMargin: 1000, cl2Diff: 0.5, isBalanced: true, compareRows: null };
+    useAppStore.getState().setManualResult(result);
+    expect(useAppStore.getState().manualResult).toEqual(result);
+  });
+
 });

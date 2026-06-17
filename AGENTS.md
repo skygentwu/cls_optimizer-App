@@ -1,3 +1,4 @@
+<!-- From: d:\python\cls_optimizer-App\AGENTS.md -->
 # cls_optimizer-App — Agent 开发指南
 
 > 本文件面向 AI 编程助手。阅读本文件前，默认你对本项目一无所知。
@@ -29,6 +30,7 @@
 | 手势 | react-swipeable 7 |
 | 截图导出 | html2canvas 1（动态 `import()` 懒加载） |
 | 日期 | dayjs 1 |
+| 测试 | Vitest 3、jsdom、@testing-library/react、@testing-library/jest-dom |
 | 代码检查 | ESLint 10 + typescript-eslint + react-hooks + react-refresh |
 
 ---
@@ -38,20 +40,26 @@
 ```
 ├── src/
 │   ├── api/
-│   │   └── client.ts          # 所有后端 API 封装（fetch-based，无 axios）
+│   │   ├── client.ts          # 所有后端 API 封装（fetch-based，无 axios）
+│   │   └── client.test.ts     # API 客户端单元测试
 │   ├── components/
 │   │   ├── AppShell.tsx       # 底部 TabBar + 手势返回外壳
 │   │   └── common/
 │   │       ├── EmptyState.tsx
+│   │       ├── EmptyState.test.tsx
 │   │       ├── ErrorBoundary.tsx
+│   │       ├── ErrorBoundary.test.tsx
 │   │       ├── ErrorRetry.tsx
-│   │       └── SkeletonCard.tsx
+│   │       ├── ErrorRetry.test.tsx
+│   │       ├── SkeletonCard.tsx
+│   │       └── SkeletonCard.test.tsx
 │   ├── constants/
 │   │   ├── index.ts           # 默认产量、localStorage 键名、价格单位
-│   │   └── products.ts        # 产品默认值与标签（与源项目同步）
+│   │   ├── products.ts        # 产品默认值与标签（与源项目同步）
+│   │   └── products.test.ts
 │   ├── hooks/                 # 自定义 Hooks（目前为空，可扩展）
 │   ├── pages/                 # 页面组件，每个页面独占一个目录
-│   │   ├── dashboard/
+│   │   ├── dashboard/         # 首屏经营驾驶舱（不懒加载）
 │   │   ├── compare/
 │   │   ├── trends/
 │   │   ├── insights/
@@ -62,25 +70,29 @@
 │   │   ├── profile/
 │   │   ├── login/
 │   │   ├── manual/
-│   │   ├── prices/
 │   │   └── recommendation/
 │   ├── stores/
 │   │   ├── appStore.ts        # 全局计算参数、主题、API 地址、推荐结果
-│   │   └── authStore.ts       # JWT Token / 用户信息 / 登录态（持久化）
+│   │   ├── appStore.test.ts
+│   │   ├── authStore.ts       # JWT Token / 用户信息 / 登录态（持久化）
+│   │   └── authStore.test.ts
+│   ├── test/
+│   │   └── setupTests.ts      # Vitest 全局初始化（mock Capacitor/matchMedia/localStorage）
 │   ├── theme/                 # 主题目录（当前为空，样式写在 src/index.css）
 │   ├── types/
-│   │   ├── index.ts           # 移动端精简类型（人工维护）
-│   │   ├── original.ts        # 从源项目自动同步的完整类型
+│   │   ├── index.ts           # 移动端实际使用的精简类型（人工维护）
+│   │   ├── original.ts        # 从源项目自动同步的完整类型，仅作参考
 │   │   ├── css.d.ts
 │   │   └── env.d.ts
 │   ├── utils/
-│   │   └── format.ts          # 数字、金额、产量、百分比、日期格式化
+│   │   ├── format.ts          # 数字、金额、产量、百分比、日期格式化
+│   │   └── format.test.ts
 │   ├── App.tsx                # HashRouter + 懒加载路由 + 登录守卫
 │   ├── main.tsx               # 根渲染：StrictMode + ErrorBoundary + ConfigProvider
 │   └── index.css              # 全局样式、深色模式覆盖、安全区适配
 ├── android/                   # Capacitor Android 原生工程
 ├── ios/                       # Capacitor iOS 原生工程
-├── public/                    # 静态资源（favicon、icons）
+├── public/                    # 静态资源（favicon.svg、icons.svg）
 ├── scripts/
 │   ├── sync_from_source.py    # 与源项目文件同步脚本
 │   └── watch_source.py        # 持续监控源项目变更
@@ -88,7 +100,7 @@
 │   ├── build-android.yml      # CI：构建 Android Debug / Release APK + AAB
 │   └── deploy-web.yml         # CI：构建并部署到 GitHub Pages
 ├── capacitor.config.ts        # Capacitor 配置（应用 ID、SplashScreen、webDir: dist）
-├── vite.config.ts             # Vite 配置（路径别名 @/、代理、手动分块）
+├── vite.config.ts             # Vite 配置（路径别名 @/、代理、手动分块、测试）
 ├── tsconfig.json              # TypeScript 严格模式配置
 ├── eslint.config.js           # ESLint Flat Config
 └── package.json
@@ -118,6 +130,19 @@ npm run build
 npm run preview
 ```
 
+### 测试命令
+
+```bash
+# 运行全部测试（Vitest，jsdom 环境）
+npm run test
+
+# 监听模式
+npm run test:watch
+
+# 生成覆盖率报告（text + html + lcov）
+npm run test:coverage
+```
+
 ### 移动端构建流程
 
 ```bash
@@ -128,7 +153,7 @@ npm run build
 npx cap sync
 
 # 3. 打开原生 IDE
-npx cap open android   # 需 Android Studio + JDK 17+
+npx cap open android   # 需 Android Studio + JDK 21+
 npx cap open ios       # 需 macOS + Xcode
 ```
 
@@ -190,12 +215,32 @@ Android 构建产物路径：
 
 ## 测试策略
 
-> **当前项目没有测试代码。** 项目未配置 Jest、Vitest、Playwright 或 Cypress。
+本项目已配置 **Vitest 3** 作为测试运行器，测试环境为 **jsdom**，配合 `@testing-library/react` 和 `@testing-library/jest-dom` 进行组件与单元测试。
 
-如需添加测试，建议：
-- 单元测试：使用 Vitest（与 Vite 生态一致）。
-- 组件测试：`@testing-library/react` + `jsdom`。
-- E2E：考虑 Playwright 或 Appium（针对 Capacitor 原生层）。
+### 现有测试覆盖
+
+| 测试文件 | 覆盖内容 |
+|---------|---------|
+| `src/api/client.test.ts` | API URL 拼接、Auth 头注入、401 处理、15 秒超时、所有 API 函数请求构造 |
+| `src/stores/appStore.test.ts` | 主题切换、API 地址设置、状态更新 |
+| `src/stores/authStore.test.ts` | 登录/登出、持久化到 localStorage |
+| `src/utils/format.test.ts` | 数字、金额、产量、百分比、日期格式化 |
+| `src/constants/products.test.ts` | 产品常量默认值 |
+| `src/components/common/*.test.tsx` | EmptyState、ErrorBoundary、ErrorRetry、SkeletonCard 组件渲染 |
+
+### 测试配置
+
+- 全局初始化文件：`src/test/setupTests.ts`
+- Mock 内容：`@capacitor/core`（模拟 Web 平台）、`window.matchMedia`（antd-mobile 响应式依赖）、`localStorage`（隔离测试数据）、`document.documentElement.setAttribute`（主题切换）。
+- 覆盖率：provider 为 `v8`，输出格式 `text`、`html`、`lcov`，排除 `node_modules/`、`src/test/`、`**/*.d.ts`、原生工程目录等。
+
+### 运行测试
+
+```bash
+npm run test           # 单次运行
+npm run test:watch     # 监听模式
+npm run test:coverage  # 生成覆盖率报告（输出到 coverage/）
+```
 
 ---
 
@@ -205,13 +250,13 @@ Android 构建产物路径：
 
 | 工作流 | 触发条件 | 说明 |
 |--------|---------|------|
-| `build-android.yml` | push 到 `main`/`master`、PR、手动触发 | 安装 Node + JDK 21 + Android SDK → `npm ci` → `npm run build` → `npx cap sync android` → 构建 Debug APK / Release APK / AAB → 上传 Artifact |
+| `build-android.yml` | push 到 `main`/`master`、PR、手动触发 | 安装 Node 22 + JDK 21 + Android SDK → `npm ci` → `npm run build` → `npx cap sync android` → 构建 Debug APK / Release APK / AAB → 上传 Artifact |
 | `deploy-web.yml` | push 到 `main`/`master`、手动触发 | `npm ci` → `npm run build`（带 `VITE_BASE_PATH`）→ 部署到 GitHub Pages |
 
 ### 部署形态
 
 1. **Web 直接使用（推荐）**：`dist/` 目录可部署到任意静态服务器（Nginx、Vercel、GitHub Pages 等）。
-2. **PWA**：已配置 `manifest.json`、主题色 `#1890ff`、全屏模式、iOS Safari 独立运行模式。
+2. **类 PWA**：`index.html` 已配置 `mobile-web-app-capable`、主题色 `#1890ff`、iOS Safari `black-translucent` 状态栏、viewport-fit=cover，但没有独立的 `manifest.json` 文件。
 3. **Android APK/AAB**：通过上述 CI 或本地 Gradle 构建。
 4. **iOS IPA**：需在 macOS 上通过 Xcode Archive + Distribute。
 
@@ -278,7 +323,8 @@ python scripts/watch_source.py --interval 60
 2. 运行同步检查：`python scripts/sync_from_source.py --check-only`
 3. 根据提示同步变更到移动端
 4. 运行 `npm run typecheck` 确保类型一致
-5. 运行 `npm run build` 确保构建成功
+5. 运行 `npm run test` 确保测试通过
+6. 运行 `npm run build` 确保构建成功
 
 ### 同步注意事项
 
@@ -301,4 +347,5 @@ python scripts/watch_source.py --interval 60
 | 严格 TS 选项 | `tsconfig.json` | `strict`、`noUnusedLocals`、`noUnusedParameters` |
 | ESLint 忽略 | `eslint.config.js` | `dist/` |
 | 应用默认后端地址 | `src/stores/appStore.ts` | 原生环境 `http://10.0.2.2:8000`，浏览器环境走相对路径 |
-| 本地存储键名 | `src/constants/index.ts`、`src/stores/` | `cls_auth_token`、`cls_auth_user`、`cls_api_base`、`cls_theme` |
+| 本地存储键名 | `src/constants/index.ts`、`src/stores/` | `cls_auth_token`、`cls_auth_user`、`cls_api_base`、`cls_theme`、`cls-auth-storage` |
+| 测试环境 | `vite.config.ts` | `globals: true`、`environment: 'jsdom'`、`setupFiles: ['./src/test/setupTests.ts']` |

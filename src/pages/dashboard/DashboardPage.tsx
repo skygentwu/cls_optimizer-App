@@ -4,18 +4,20 @@ import {
   HistogramOutline,
   EyeOutline,
   AudioOutline,
-  SetOutline,
   ClockCircleOutline,
   CalendarOutline,
   PayCircleOutline,
   FileOutline,
   DownlandOutline,
+  EditSOutline,
+  ContentOutline,
 } from 'antd-mobile-icons';
 import { useNavigate } from 'react-router-dom';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   PieChart, Pie, Cell,
 } from 'recharts';
+import { ChartBox } from '@/components/common/ChartBox';
 import { useAppStore } from '@/stores/appStore';
 import { fetchDecisionModes, recommendDecision, fetchPrices, evaluateManualPlan } from '@/api/client';
 import { PRODUCT_LABELS, DEFAULT_NAOH_DAILY } from '@/constants';
@@ -65,7 +67,6 @@ export default function DashboardPage() {
 
     setLoading(true);
     setError(false);
-    useAppStore.getState().setGlobalLoading(true);
     try {
       const [modes, priceRes] = await Promise.all([
         fetchDecisionModes(),
@@ -110,7 +111,6 @@ export default function DashboardPage() {
     } finally {
       if (!ctrl.signal.aborted) {
         setLoading(false);
-        useAppStore.getState().setGlobalLoading(false);
       }
     }
   }, []);
@@ -141,14 +141,15 @@ export default function DashboardPage() {
   , [rec?.products]);
 
   const quickCards = useMemo(() => [
-    { title: '决策对比', icon: <HistogramOutline />, color: '#1677ff', path: '/compare' },
-    { title: '趋势分析', icon: <EyeOutline />, color: '#52c41a', path: '/trends' },
+    { title: '最优推荐', icon: <ContentOutline />, color: '#1677ff', path: '/recommendation' },
+    { title: '决策对比', icon: <HistogramOutline />, color: '#722ed1', path: '/compare' },
+    { title: '趋势分析', icon: <EyeOutline />, color: '#eb2f96', path: '/trends' },
     { title: '经营建议', icon: <AudioOutline />, color: '#faad14', path: '/insights' },
-    { title: '历史回测', icon: <ClockCircleOutline />, color: '#722ed1', path: '/backtest' },
-    { title: '预测分析', icon: <CalendarOutline />, color: '#eb2f96', path: '/forecast' },
-    { title: '财务分析', icon: <PayCircleOutline />, color: '#13c2c2', path: '/margin' },
-    { title: '经营报告', icon: <FileOutline />, color: '#f5222d', path: '/report' },
-    { title: '参数配置', icon: <SetOutline />, color: '#666', path: '/profile' },
+    { title: '历史回测', icon: <ClockCircleOutline />, color: '#13c2c2', path: '/backtest' },
+    { title: '预测分析', icon: <CalendarOutline />, color: '#0958d9', path: '/forecast' },
+    { title: '财务分析', icon: <PayCircleOutline />, color: '#f5222d', path: '/margin' },
+    { title: '经营报告', icon: <FileOutline />, color: '#fa541c', path: '/report' },
+    { title: '手动模拟', icon: <EditSOutline />, color: '#2f4554', path: '/manual' },
   ], []);
 
   return (
@@ -213,21 +214,19 @@ export default function DashboardPage() {
                 <span>📊</span>
                 <span>边际贡献对比</span>
               </div>
-              <div style={{ height: 160, width: '100%' }}>
-                <ResponsiveContainer>
-                  <BarChart data={marginCompareData} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" tickFormatter={(v: number) => `¥${(v / 1000).toFixed(0)}k`} />
-                    <YAxis type="category" dataKey="name" width={70} />
-                    <Tooltip formatter={(value) => [`¥${Number(value).toLocaleString()}`, '边际贡献']} />
-                    <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24}>
-                      {marginCompareData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              <ChartBox height={160}>
+                <BarChart data={marginCompareData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" tickFormatter={(v: number) => `¥${(v / 1000).toFixed(0)}k`} />
+                  <YAxis type="category" dataKey="name" width={70} />
+                  <Tooltip formatter={(value) => [`¥${Number(value).toLocaleString()}`, '边际贡献']} />
+                  <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24}>
+                    {marginCompareData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ChartBox>
             </Card>
           )}
 
@@ -238,26 +237,24 @@ export default function DashboardPage() {
                 <span>🥧</span>
                 <span>产量分布</span>
               </div>
-              <div style={{ height: 200, width: '100%' }}>
-                <ResponsiveContainer>
-                  <PieChart>
-                    <Pie
-                      data={productPieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={70}
-                      paddingAngle={3}
-                      dataKey="value"
-                    >
-                      {productPieData.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => [`${Number(value)} 吨`, '产量']} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+              <ChartBox height={200}>
+                <PieChart>
+                  <Pie
+                    data={productPieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={70}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {productPieData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => [`${Number(value)} 吨`, '产量']} />
+                </PieChart>
+              </ChartBox>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
                 {productPieData.map((item, i) => (
                   <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
@@ -323,7 +320,7 @@ export default function DashboardPage() {
               <span>🚀</span>
               <span>功能入口</span>
             </div>
-            <Grid columns={4} gap={8}>
+            <Grid columns={5} gap={8}>
               {quickCards.map((item) => (
                 <Grid.Item key={item.title} onClick={() => navigate(item.path)}>
                   <div style={{ textAlign: 'center', padding: '10px 2px' }}>

@@ -91,9 +91,23 @@ export type PriceForecastVersionReviewResponse = {
   message: string;
 };
 
+export type PriceSourceTierStats = {
+  实际行情: number;
+  模拟数据: number;
+  预测数据: number;
+  人工修改: number;
+  待填写: number;
+  其他: number;
+  total_records: number;
+  actual_market_pct: number;
+  target_pct: number;
+  meets_target: boolean;
+};
+
 export type PriceQualityResponse = {
   total: number;
   severity_counts: Record<string, number>;
+  source_tier_stats?: PriceSourceTierStats;
   records: Array<Record<string, unknown>>;
 };
 
@@ -126,6 +140,47 @@ export type PriceForecastGenerateResponse = {
   records: PriceRecord[];
 };
 
+export type PriceForecastPreviewResponse = PriceForecastGenerateResponse & {
+  preview_summary: Record<string, unknown>;
+  forecast_values: Array<Record<string, unknown>>;
+  method_notes: Array<Record<string, unknown>>;
+  model_description: string;
+  version_preview: Record<string, unknown>;
+  value_count: number;
+  source_summary: string;
+  common: Record<string, unknown>;
+  rules: Record<string, unknown>;
+};
+
+export type PriceForecastScenarioRequest = {
+  days: number;
+  common: Record<string, unknown>;
+  rules: Record<string, Record<string, unknown>>;
+};
+
+export type PriceForecastScenarioResponse = {
+  dates: string[];
+  conservative: Record<string, number[]>;
+  neutral: Record<string, number[]>;
+  optimistic: Record<string, number[]>;
+};
+
+export type PriceForecastModelComparisonRequest = {
+  days: number;
+  lookback_days: number;
+  strategies: string[];
+  price_columns: string[];
+  common: Record<string, unknown>;
+  rules: Record<string, Record<string, unknown>>;
+};
+
+export type PriceForecastModelComparisonResponse = {
+  records: Array<Record<string, unknown>>;
+  series: Array<Record<string, unknown>>;
+  recommended_strategy: Record<string, string>;
+  warnings: string[];
+};
+
 export type PriceMarketAnalysisResponse = {
   source: "database" | "excel" | "provided" | "unknown";
   used_llm: boolean;
@@ -151,6 +206,7 @@ export type OptimizationResponse = {
   status: string;
   is_optimal: boolean;
   max_products?: ProductPayload | null;
+  infeasibility_reason?: string | null;
 };
 
 export type DecisionMode = {
@@ -175,6 +231,7 @@ export type DecisionRecommendationResponse = {
   calculation_process: Record<string, unknown> | null;
   conclusion: string;
   max_products?: ProductPayload | null;
+  infeasibility_reason?: string | null;
   raw: Record<string, unknown>;
 };
 
@@ -199,6 +256,25 @@ export type DecisionSensitivityResponse = {
   best_case: DecisionSensitivityRow | null;
   worst_case: DecisionSensitivityRow | null;
   conclusion: string;
+};
+
+export type DecisionComparisonRow = {
+  decision_name: string;
+  scenario: string;
+  status: string;
+  is_optimal: boolean;
+  products: ProductPayload | null;
+  total_margin: number;
+  total_product_qty: number;
+  total_cl2_usage: number;
+  profit_margin_delta: number | null;
+  same_as_profit_plan: boolean | null;
+  conclusion: string;
+  calculation_process: Record<string, unknown> | null;
+};
+
+export type DecisionComparisonResponse = {
+  rows: DecisionComparisonRow[];
 };
 
 export type ManualEvaluationResponse = {
@@ -359,6 +435,7 @@ export type DataAdminTablePreviewResponse = {
   label: string;
   total: number;
   columns: string[];
+  columnLabels: Record<string, string>;
   records: Array<Record<string, unknown>>;
 };
 
@@ -493,6 +570,62 @@ export type ForecastLlmAdviceResponse = {
   word_content_base64: string;
 };
 
+export type RecommendationExplanationResponse = {
+  used_llm: boolean;
+  provider: string;
+  answer: string;
+  prompt: string;
+  process_log: string[];
+  llm_error: string;
+};
+
+export type PriceQualityExplanationResponse = {
+  used_llm: boolean;
+  provider: string;
+  answer: string;
+  prompt: string;
+  process_log: string[];
+  llm_error: string;
+};
+
+export type ForecastAccuracyReviewResponse = {
+  used_llm: boolean;
+  provider: string;
+  answer: string;
+  prompt: string;
+  process_log: string[];
+  llm_error: string;
+};
+
+export type ConstraintSensitivityExplanationResponse = {
+  used_llm: boolean;
+  provider: string;
+  answer: string;
+  prompt: string;
+  process_log: string[];
+  llm_error: string;
+};
+
+export type FeedbackReviewAnalysisResponse = {
+  used_llm: boolean;
+  provider: string;
+  answer: string;
+  prompt: string;
+  process_log: string[];
+  llm_error: string;
+};
+
+export type ParameterTuningScope = "solver_weights" | "forecast_coefficients";
+
+export type ParameterTuningAdviceResponse = {
+  used_llm: boolean;
+  provider: string;
+  answer: string;
+  prompt: string;
+  process_log: string[];
+  llm_error: string;
+};
+
 export type BacktestAnalysisResponse = {
   source: Record<string, string>;
   range: Record<string, string>;
@@ -598,4 +731,39 @@ export type AdvisorFeedbackMonthlySummaryResponse = {
   total: number;
   months: Array<Record<string, unknown>>;
   latest_month: Record<string, unknown>;
+};
+
+
+export type ConstraintVersionMeta = {
+  id: number;
+  version_tag: string;
+  changed_by: string;
+  effective_date: string;
+  created_at: string;
+};
+
+export type ConstraintVersionDetail = ConstraintVersionMeta & {
+  snapshot_json: string;
+};
+
+export type AgentChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+export type AgentToolStep = {
+  tool: string;
+  label: string;
+  status: string;
+  summary?: string;
+};
+
+export type AgentChatResult = {
+  answer: string;
+  steps: AgentToolStep[];
+  llm_error?: string | null;
+};
+
+export type AgentRecentQuestionsResponse = {
+  questions: string[];
 };

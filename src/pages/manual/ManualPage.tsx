@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { NavBar, Button, Card, Tag, Toast, Stepper, ProgressBar } from 'antd-mobile';
 import { useAppStore } from '@/stores/appStore';
 import { evaluateManualPlan } from '@/api/client';
@@ -7,15 +8,22 @@ import { formatCurrency, formatTons } from '@/utils/format';
 import './manual.css';
 
 export default function ManualPage() {
-  const store = useAppStore();
+  const navigate = useNavigate();
+  const recommendation = useAppStore((s) => s.recommendation);
+  const prices = useAppStore((s) => s.prices);
+  const naohDaily = useAppStore((s) => s.naohDaily);
+  const manualProducts = useAppStore((s) => s.manualProducts);
+  const manualResult = useAppStore((s) => s.manualResult);
+  const setManualProducts = useAppStore((s) => s.setManualProducts);
+  const setManualResult = useAppStore((s) => s.setManualResult);
+
   const [loading, setLoading] = useState(false);
-  const [localProducts, setLocalProducts] = useState({ ...store.manualProducts });
+  const [localProducts, setLocalProducts] = useState({ ...manualProducts });
 
   const handleSyncFromRecommendation = () => {
-    const rec = store.recommendation;
-    if (rec?.products) {
-      setLocalProducts({ ...rec.products });
-      store.setManualProducts({ ...rec.products });
+    if (recommendation?.products) {
+      setLocalProducts({ ...recommendation.products });
+      setManualProducts({ ...recommendation.products });
       Toast.show({ icon: 'success', content: '已同步推荐方案' });
     } else {
       Toast.show({ icon: 'fail', content: '暂无推荐方案，请先计算' });
@@ -25,18 +33,17 @@ export default function ManualPage() {
   const handleEvaluate = async () => {
     setLoading(true);
     try {
-      store.setManualProducts(localProducts);
-      const rec = store.recommendation;
+      setManualProducts(localProducts);
 
       const res = await evaluateManualPlan(
-        store.naohDaily,
-        store.prices,
+        naohDaily,
+        prices,
         localProducts,
-        rec?.products ?? null,
-        rec?.total_margin ?? null
+        recommendation?.products ?? null,
+        recommendation?.total_margin ?? null
       );
 
-      store.setManualResult({
+      setManualResult({
         totalMargin: res.total_margin,
         cl2Diff: res.cl2_diff,
         isBalanced: res.is_cl2_balanced,
@@ -50,15 +57,13 @@ export default function ManualPage() {
       setLoading(false);
     }
   };
-
-  const manualResult = store.manualResult;
   const cl2BalancePercent = manualResult
     ? Math.max(0, Math.min(100, 100 - Math.abs(manualResult.cl2Diff) * 2))
     : 0;
 
   return (
     <div className="manual-page">
-      <NavBar back={null}>手动模拟</NavBar>
+      <NavBar onBack={() => navigate(-1)}>手动模拟</NavBar>
 
       <div className="page-content">
         {/* 产量输入 */}
@@ -141,21 +146,21 @@ export default function ManualPage() {
                 <div className="margin-label">人工方案边际贡献</div>
                 <div className="margin-value">{formatCurrency(manualResult.totalMargin)}</div>
               </div>
-              {store.recommendation && (
+              {recommendation && (
                 <div className="margin-item">
                   <div className="margin-label">系统推荐边际贡献</div>
-                  <div className="margin-value recommended">{formatCurrency(store.recommendation.total_margin)}</div>
+                  <div className="margin-value recommended">{formatCurrency(recommendation.total_margin)}</div>
                 </div>
               )}
             </div>
 
-            {store.recommendation && (
+            {recommendation && (
               <div className="diff-summary">
                 <div className="diff-item">
                   <span>差额:</span>
-                  <span className={manualResult.totalMargin >= store.recommendation.total_margin ? 'status-optimal' : 'status-error'}>
-                    {manualResult.totalMargin >= store.recommendation.total_margin ? '+' : ''}
-                    {formatCurrency(manualResult.totalMargin - store.recommendation.total_margin)}
+                  <span className={manualResult.totalMargin >= recommendation.total_margin ? 'status-optimal' : 'status-error'}>
+                    {manualResult.totalMargin >= recommendation.total_margin ? '+' : ''}
+                    {formatCurrency(manualResult.totalMargin - recommendation.total_margin)}
                   </span>
                 </div>
               </div>

@@ -1,94 +1,78 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Card, Tag, Toast, Button, Badge } from 'antd-mobile';
+import { NavBar, Card, Tag, Toast, Button } from 'antd-mobile';
 import { useAppStore } from '@/stores/appStore';
-import { formatCurrency } from '@/utils/format';
+import { generateAdvisorReport } from '@/api/client';
 import { SkeletonCard } from '@/components/common/SkeletonCard';
-import { ErrorRetry } from '@/components/common/ErrorRetry';
 import './insights.css';
-
-// FIXME: 初版暂无预警和历史建议接口，待后端提供后替换为真实数据
-const ALERTS: Array<{ id: number; level: string; title: string; desc: string; time: string }> = [];
-const HISTORY_ADVICE: Array<{ date: string; summary: string; diff: number }> = [];
 
 export default function InsightsPage() {
   const navigate = useNavigate();
-  const store = useAppStore();
+  const recommendation = useAppStore((s) => s.recommendation);
+  const decisionName = useAppStore((s) => s.decisionName);
+
   const [report, setReport] = useState('');
   const [reportLoading, setReportLoading] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleRetry = () => {
-    setError(false);
-    setLoading(true);
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  };
+  // 持有当前进行中的请求 controller，用于：1) 取消竞态 2) 卸载时清理
+  const abortRef = useRef<AbortController | null>(null);
+  // 标记是否已为本轮 recommendation 自动触发过请求，避免"清空 report→重新生成"双触发
+  const autoFetchedFor = useRef<unknown>(null);
 
   const loadReport = async () => {
-    const rec = store.recommendation;
-    if (!rec) {
+    if (!recommendation) {
       Toast.show({ icon: 'fail', content: '请先在概览页获取推荐数据' });
       return;
     }
+    // 取消上一次未完成的请求
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+
     setReportLoading(true);
     try {
-      // 使用模拟数据（实际应调用 generateAdvisorReport API）
-      setReport(`## 今日经营建议
-
-### 核心结论
-根据当前价格数据和约束条件，系统推荐以下产量配比：
-
-- **液氯**: ${rec.products?.liquid_chlorine ?? 0} 吨/天
-- **31%盐酸**: ${rec.products?.hcl31 ?? 0} 吨/天  
-- **10%次氯酸钠**: ${rec.products?.naclo10 ?? 0} 吨/天
-
-### 关键洞察
-1. 当前液氯价格处于上涨趋势，建议维持推荐产量
-2. 盐酸边际贡献最优，可适当增加配比
-3. 氯气平衡状态良好，无需额外调整
-
-### 风险提示
-- 次氯酸钠需求有波动风险，建议密切关注市场动态
-- 若液氯价格继续上升超过 250 元/吨，建议重新评估配比`);
+      const res = await generateAdvisorReport({
+        decision_name: decisionName,
+        opt_products: recommendation.products,
+        opt_total_margin: recommendation.total_margin,
+        use_llm: false,
+      });
+      // 被新请求取代则丢弃，避免旧响应覆盖
+      if (ctrl.signal.aborted) return;
+      setReport(res.report);
+    } catch {
+      if (ctrl.signal.aborted) return;
+      Toast.show({ icon: 'fail', content: '生成建议失败，请重试' });
     } finally {
-      setReportLoading(false);
+      if (!ctrl.signal.aborted) {
+        setReportLoading(false);
+      }
     }
   };
 
+  // 仅在 recommendation 变化时自动触发一次。
+  // 关键：依赖里不含 report，避免"清空 report→重新生成"按钮操作引发的双触发。
   useEffect(() => {
-    if (store.recommendation && !report) {
+    if (recommendation && autoFetchedFor.current !== recommendation) {
+      autoFetchedFor.current = recommendation;
       loadReport();
     }
+    return () => {
+      // 卸载或 recommendation 变化时取消进行中的请求
+      abortRef.current?.abort();
+    };
+    // loadReport 引用每次渲染都变，但这里只想在 recommendation 变化时触发，
+    // 故用 ref 兜底防重复，并显式限定依赖
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store.recommendation]);
+  }, [recommendation]);
 
-  if (loading) {
+  if (reportLoading && !report) {
     return (
       <div className="insights-page">
         <NavBar onBack={() => navigate(-1)}>智能建议</NavBar>
         <SkeletonCard rows={3} />
         <SkeletonCard rows={3} />
         <SkeletonCard rows={3} />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="insights-page">
-        <NavBar onBack={() => navigate(-1)}>智能建议</NavBar>
-        <ErrorRetry onRetry={handleRetry} />
       </div>
     );
   }
@@ -98,36 +82,9 @@ export default function InsightsPage() {
       <NavBar onBack={() => navigate(-1)}>智能建议</NavBar>
 
       <div className="page-content">
-        {/* 预警通知 */}
-        <Card style={{ margin: '12px' }}>
-          <div className="card-title">
-            <span>🔔</span>
-            <span>预警通知</span>
-            {ALERTS.length > 0 && <Badge content={ALERTS.length} style={{ '--right': '-6px', '--top': '0px' }} />}
-          </div>
-          {ALERTS.length > 0 ? (
-            <div className="alert-list">
-              {ALERTS.map((alert) => (
-                <div key={alert.id} className={`alert-item alert-${alert.level}`}>
-                  <div className="alert-header">
-                    <span className="alert-title">{alert.title}</span>
-                    <span className="alert-time">{alert.time}</span>
-                  </div>
-                  <div className="alert-desc">{alert.desc}</div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: '#999', fontSize: 14 }}>
-              暂无预警通知
-            </div>
-          )}
-        </Card>
-
         {/* 今日经营建议 */}
         <Card style={{ margin: '12px' }}>
           <div className="card-title">
-            <span>🤖</span>
             <span>AI 经营建议</span>
             <Tag color="primary">实时</Tag>
           </div>
@@ -159,30 +116,17 @@ export default function InsightsPage() {
               </Button>
             </div>
           )}
-        </Card>
-
-        {/* 历史建议 */}
-        <Card style={{ margin: '12px' }}>
-          <div className="card-title">
-            <span>📜</span>
-            <span>历史建议记录</span>
-          </div>
-          {HISTORY_ADVICE.length > 0 ? (
-            <div className="history-list">
-              {HISTORY_ADVICE.map((item, i) => (
-                <div key={i} className="history-item">
-                  <div className="history-header">
-                    <span className="history-date">{item.date}</span>
-                    <Tag color="success">+{formatCurrency(item.diff)}</Tag>
-                  </div>
-                  <div className="history-summary">{item.summary}</div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: '#999', fontSize: 14 }}>
-              暂无历史建议记录
-            </div>
+          {report && (
+            <Button
+              size="mini"
+              color="primary"
+              fill="outline"
+              loading={reportLoading}
+              onClick={() => { setReport(''); loadReport(); }}
+              style={{ marginTop: 12 }}
+            >
+              重新生成
+            </Button>
           )}
         </Card>
       </div>

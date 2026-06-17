@@ -113,7 +113,19 @@ describe('formatDateTime', () => {
     expect(result).toContain('10:30');
   });
 
+  it('支持 Date 对象输入', () => {
+    const result = formatDateTime(new Date('2026-06-06T10:30:00'));
+    expect(result).toContain('2026/06/06');
+    expect(result).toContain('10:30');
+  });
+
   it('空值返回 "-"', () => {
     expect(formatDateTime(null)).toBe('-');
+    expect(formatDateTime(undefined)).toBe('-');
+    expect(formatDateTime('')).toBe('-');
+  });
+
+  it('非法日期字符串返回 "-"', () => {
+    expect(formatDateTime('not-a-date')).toBe('-');
   });
 });

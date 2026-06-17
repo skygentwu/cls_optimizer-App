@@ -2,6 +2,16 @@
  * Vitest 全局测试初始化文件
  * 所有测试运行前会先执行此文件，用于设置统一的测试环境
  */
+
+// 必须放在最前面：React 的入口 index.js 在首次被 import 时，
+// 会依据 process.env.NODE_ENV 同步决定加载 development 还是 production 构建。
+// Vitest 默认把 process.env.NODE_ENV 设为 'production'，导致加载
+// react.production.min.js，使 @testing-library/react 的 act() 报错
+// "act(...) is not supported in production builds of React"。
+// setupFiles 先于各测试文件执行，在此将其改回 development，
+// 确保后续 import 的 React 走开发构建（act 可用、带友好告警）。
+process.env.NODE_ENV = 'development';
+
 import '@testing-library/jest-dom/vitest';
 import { vi } from 'vitest';
 

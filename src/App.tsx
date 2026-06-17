@@ -6,7 +6,6 @@ import AppShell from '@/components/AppShell';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
 import { SkeletonCard } from '@/components/common/SkeletonCard';
 
-// 懒加载非首屏页面
 const ComparePage = lazy(() => import('@/pages/compare/ComparePage'));
 const TrendsPage = lazy(() => import('@/pages/trends/TrendsPage'));
 const InsightsPage = lazy(() => import('@/pages/insights/InsightsPage'));
@@ -15,6 +14,8 @@ const ForecastPage = lazy(() => import('@/pages/forecast/ForecastPage'));
 const MarginPage = lazy(() => import('@/pages/margin/MarginPage'));
 const ReportPage = lazy(() => import('@/pages/report/ReportPage'));
 const ProfilePage = lazy(() => import('@/pages/profile/ProfilePage'));
+const ManualPage = lazy(() => import('@/pages/manual/ManualPage'));
+const RecommendationPage = lazy(() => import('@/pages/recommendation/RecommendationPage'));
 
 function App() {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
@@ -42,6 +43,8 @@ function App() {
                     <Route path="/margin" element={<MarginPage />} />
                     <Route path="/report" element={<ReportPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/manual" element={<ManualPage />} />
+                    <Route path="/recommendation" element={<RecommendationPage />} />
                   </Routes>
                 </Suspense>
               </AppShell>
