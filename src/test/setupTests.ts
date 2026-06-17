@@ -16,6 +16,25 @@ import '@testing-library/jest-dom/vitest';
 import { vi } from 'vitest';
 
 /**
+ * Mock window.getComputedStyle
+ * 原因：antd-mobile 的 convert-px.js 在初始化时会创建 px tester 元素并检查
+ * getComputedStyle(tester).position === 'fixed'。jsdom 中不导入 CSS，
+ * 所以 position 默认为空字符串，触发 "px tester is not rendering properly" 警告。
+ * 这里 mock getComputedStyle 对 adm-px-tester 类返回 position: 'fixed'。
+ */
+const originalGetComputedStyle = window.getComputedStyle;
+window.getComputedStyle = vi.fn((el: Element) => {
+  const styles = originalGetComputedStyle(el);
+  if (el.classList?.contains('adm-px-tester')) {
+    return {
+      ...styles,
+      position: 'fixed',
+    } as CSSStyleDeclaration;
+  }
+  return styles;
+}) as typeof window.getComputedStyle;
+
+/**
  * Mock @capacitor/core
  * 原因：Capacitor 是原生桥接库，在 Node/jsdom 环境中不存在
  * 默认模拟为 Web 环境，避免调用原生 API 时报错
