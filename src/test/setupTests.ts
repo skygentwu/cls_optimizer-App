@@ -35,6 +35,18 @@ window.getComputedStyle = vi.fn((el: Element) => {
 }) as typeof window.getComputedStyle;
 
 /**
+ * Mock ResizeObserver
+ * 原因：ChartBox 组件使用 ResizeObserver 监听容器宽度变化，
+ * jsdom 不支持 ResizeObserver，会导致测试报错。
+ */
+class MockResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+Object.defineProperty(window, 'ResizeObserver', { value: MockResizeObserver });
+
+/**
  * Mock @capacitor/core
  * 原因：Capacitor 是原生桥接库，在 Node/jsdom 环境中不存在
  * 默认模拟为 Web 环境，避免调用原生 API 时报错
